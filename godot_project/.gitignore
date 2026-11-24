@@ -1,0 +1,14 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+*.tmp
+*.import
+*.translation
+export.cfg
+# Keep export_presets.cfg tracked
+!export_presets.cfg
+# Builds
+build/
+# OS
+.DS_Store
+Thumbs.db

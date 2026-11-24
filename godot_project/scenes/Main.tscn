@@ -1,0 +1,403 @@
+[gd_scene load_steps=18 format=3 uid="uid://cmain0001"]
+
+[ext_resource type="Script" path="res://scripts/Main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/Player.gd" id="2_player"]
+[ext_resource type="Script" path="res://scripts/HUD.gd" id="3_hud"]
+[ext_resource type="PackedScene" path="res://scenes/Monster.tscn" id="4_monster"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
+sky_top_color = Color(0.05, 0.07, 0.15, 1)
+sky_horizon_color = Color(0.15, 0.12, 0.2, 1)
+ground_bottom_color = Color(0.02, 0.02, 0.04, 1)
+ground_horizon_color = Color(0.1, 0.08, 0.12, 1)
+
+[sub_resource type="Sky" id="Sky_1"]
+sky_material = SubResource("ProceduralSkyMaterial_1")
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 2
+sky = SubResource("Sky_1")
+ambient_light_source = 2
+ambient_light_color = Color(0.6, 0.65, 0.8, 1)
+ambient_light_energy = 0.7
+tonemap_mode = 2
+glow_enabled = true
+glow_intensity = 0.4
+fog_enabled = true
+fog_light_color = Color(0.08, 0.09, 0.14, 1)
+fog_density = 0.012
+
+[sub_resource type="StandardMaterial3D" id="Mat_Floor"]
+albedo_color = Color(0.16, 0.19, 0.24, 1)
+roughness = 0.85
+metallic = 0.1
+
+[sub_resource type="CylinderMesh" id="Mesh_Floor"]
+top_radius = 38.0
+bottom_radius = 40.0
+height = 1.2
+material = SubResource("Mat_Floor")
+
+[sub_resource type="StandardMaterial3D" id="Mat_Inner"]
+albedo_color = Color(0.22, 0.26, 0.33, 1)
+roughness = 0.8
+metallic = 0.15
+
+[sub_resource type="CylinderMesh" id="Mesh_Inner"]
+top_radius = 28.0
+bottom_radius = 28.5
+height = 0.16
+material = SubResource("Mat_Inner")
+
+[sub_resource type="StandardMaterial3D" id="Mat_Ring"]
+albedo_color = Color(0.22, 0.7, 0.9, 1)
+emission_enabled = true
+emission = Color(0.1, 0.5, 0.8, 1)
+emission_energy_multiplier = 1.2
+
+[sub_resource type="TorusMesh" id="Mesh_Ring"]
+inner_radius = 5.6
+outer_radius = 5.9
+material = SubResource("Mat_Ring")
+
+[sub_resource type="CapsuleShape3D" id="PlayerShape"]
+radius = 0.5
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="Mat_Slash"]
+transparency = 1
+albedo_color = Color(1, 0.8, 0.4, 0.8)
+emission_enabled = true
+emission = Color(1, 0.6, 0.2, 1)
+emission_energy_multiplier = 2.0
+cull_mode = 2
+
+[sub_resource type="TorusMesh" id="Mesh_Slash"]
+inner_radius = 1.5
+outer_radius = 2.0
+
+[sub_resource type="StandardMaterial3D" id="Mat_Knight"]
+albedo_color = Color(0.75, 0.78, 0.85, 1)
+metallic = 0.85
+roughness = 0.25
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_main")
+monster_scene = ExtResource("4_monster")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866, -0.353, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 16, 28, 18)
+light_color = Color(1, 0.98, 0.92, 1)
+light_energy = 2.2
+shadow_enabled = true
+
+[node name="Arena" type="Node3D" parent="."]
+
+[node name="Floor" type="MeshInstance3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.6, 0)
+mesh = SubResource("Mesh_Floor")
+
+[node name="InnerRing" type="MeshInstance3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+mesh = SubResource("Mesh_Inner")
+
+[node name="RuneRing" type="MeshInstance3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+mesh = SubResource("Mesh_Ring")
+
+[node name="Player" type="CharacterBody3D" parent="."]
+script = ExtResource("2_player")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("PlayerShape")
+
+[node name="SwordPivot" type="Node3D" parent="Player"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 0)
+
+[node name="SwordMeshHolder" type="Node3D" parent="Player/SwordPivot"]
+
+[node name="KnightHolder" type="Node3D" parent="Player"]
+visible = false
+
+[node name="KnightBody" type="MeshInstance3D" parent="Player/KnightHolder"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+mesh = SubResource("Mesh_Inner")
+material_override = SubResource("Mat_Knight")
+skeleton = NodePath("")
+
+[node name="AuraLight" type="OmniLight3D" parent="Player"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
+light_color = Color(0.53, 0.94, 0.67, 1)
+light_energy = 2.2
+omni_range = 9.0
+
+[node name="SlashRing" type="MeshInstance3D" parent="Player"]
+visible = false
+mesh = SubResource("Mesh_Slash")
+material_override = SubResource("Mat_Slash")
+
+[node name="Monsters" type="Node3D" parent="."]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.707, 0.707, 0, -0.707, 0.707, 0, 13.2, 15.8)
+fov = 48.0
+current = true
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource("3_hud")
+
+[node name="Control" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TopBar" type="Panel" parent="HUD/Control"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 110.0
+grow_horizontal = 2
+
+[node name="LevelLabel" type="Label" parent="HUD/Control/TopBar"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 8.0
+offset_right = 120.0
+offset_bottom = 34.0
+text = "NV. 1"
+
+[node name="SwordNameLabel" type="Label" parent="HUD/Control/TopBar"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 32.0
+offset_right = 520.0
+offset_bottom = 58.0
+text = "Espada de Madera Ancestral"
+
+[node name="XPLabel" type="Label" parent="HUD/Control/TopBar"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 58.0
+offset_right = 260.0
+offset_bottom = 78.0
+text = "EXP: 0/35"
+
+[node name="XPBar" type="ProgressBar" parent="HUD/Control/TopBar"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 80.0
+offset_right = 360.0
+offset_bottom = 100.0
+max_value = 35.0
+value = 0.0
+
+[node name="HPLabel" type="Label" parent="HUD/Control/TopBar"]
+layout_mode = 0
+offset_left = 400.0
+offset_top = 8.0
+offset_right = 600.0
+offset_bottom = 30.0
+text = "VIDA: 220/220"
+
+[node name="HPBar" type="ProgressBar" parent="HUD/Control/TopBar"]
+layout_mode = 0
+offset_left = 400.0
+offset_top = 32.0
+offset_right = 640.0
+offset_bottom = 54.0
+max_value = 220.0
+value = 220.0
+
+[node name="GoldLabel" type="Label" parent="HUD/Control/TopBar"]
+layout_mode = 0
+offset_left = 680.0
+offset_top = 10.0
+offset_right = 800.0
+offset_bottom = 32.0
+text = "Oro: 60"
+
+[node name="KillsLabel" type="Label" parent="HUD/Control/TopBar"]
+layout_mode = 0
+offset_left = 680.0
+offset_top = 34.0
+offset_right = 820.0
+offset_bottom = 56.0
+text = "Bajas: 0"
+
+[node name="WaveLabel" type="Label" parent="HUD/Control/TopBar"]
+layout_mode = 0
+offset_left = 680.0
+offset_top = 58.0
+offset_right = 860.0
+offset_bottom = 80.0
+text = "Oleada 1 (0/8)"
+
+[node name="AutoHuntBtn" type="Button" parent="HUD/Control/TopBar"]
+layout_mode = 0
+offset_left = 900.0
+offset_top = 10.0
+offset_right = 1040.0
+offset_bottom = 42.0
+text = "Auto-Caza"
+
+[node name="ModeBtn" type="Button" parent="HUD/Control/TopBar"]
+layout_mode = 0
+offset_left = 1050.0
+offset_top = 10.0
+offset_right = 1210.0
+offset_bottom = 42.0
+text = "Modo Caballero"
+
+[node name="LevelUpBtn" type="Button" parent="HUD/Control/TopBar"]
+layout_mode = 0
+offset_left = 1220.0
+offset_top = 10.0
+offset_right = 1320.0
+offset_bottom = 42.0
+text = "+1 Nivel"
+
+[node name="LogPanel" type="Panel" parent="HUD/Control"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -220.0
+offset_right = 420.0
+offset_bottom = -16.0
+grow_vertical = 0
+
+[node name="LogLabel" type="RichTextLabel" parent="HUD/Control/LogPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+bbcode_enabled = false
+text = "¡Bienvenido a la Forja de Almas 3D!"
+scroll_active = true
+
+[node name="ForgePanel" type="Panel" parent="HUD/Control"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -360.0
+offset_top = -330.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="ForgeTitle" type="Label" parent="HUD/Control/ForgePanel"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 8.0
+offset_right = 340.0
+offset_bottom = 30.0
+text = "Forja de Mejoras"
+
+[node name="SharpBtn" type="Button" parent="HUD/Control/ForgePanel"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 36.0
+offset_right = 330.0
+offset_bottom = 68.0
+text = "Afilar Hoja (+18% Daño) - 25 Oro"
+
+[node name="SwiftBtn" type="Button" parent="HUD/Control/ForgePanel"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 74.0
+offset_right = 330.0
+offset_bottom = 106.0
+text = "Equilibrio Ligero (+8% Vel) - 30 Oro"
+
+[node name="CritBtn" type="Button" parent="HUD/Control/ForgePanel"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 112.0
+offset_right = 330.0
+offset_bottom = 144.0
+text = "Templado Crítico (+4% Crit) - 35 Oro"
+
+[node name="VampBtn" type="Button" parent="HUD/Control/ForgePanel"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 150.0
+offset_right = 330.0
+offset_bottom = 182.0
+text = "Runa Devoradora (+3 Vida) - 40 Oro"
+
+[node name="SoulBtn" type="Button" parent="HUD/Control/ForgePanel"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 188.0
+offset_right = 330.0
+offset_bottom = 220.0
+text = "Núcleo de Almas (+15% EXP/Oro) - 30 Oro"
+
+[node name="SizeBtn" type="Button" parent="HUD/Control/ForgePanel"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 226.0
+offset_right = 330.0
+offset_bottom = 258.0
+text = "Forja Colosal (+6% Tamaño) - 45 Oro"
+
+[node name="ControlsHint" type="Label" parent="HUD/Control/ForgePanel"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 268.0
+offset_right = 330.0
+offset_bottom = 306.0
+text = "WASD mover | Click/Espacio atacar
+Q Torbellino | E Onda | R Ult | Shift Dash"
+autowrap_mode = 2
+
+[node name="EvoBanner" type="Panel" parent="HUD/Control"]
+visible = false
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 130.0
+offset_right = 300.0
+offset_bottom = 190.0
+grow_horizontal = 2
+
+[node name="EvoLabel" type="Label" parent="HUD/Control/EvoBanner"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "¡EVOLUCIÓN!"
+
+[connection signal="pressed" from="HUD/Control/TopBar/AutoHuntBtn" to="HUD" method="_on_auto_hunt_pressed"]
+[connection signal="pressed" from="HUD/Control/TopBar/ModeBtn" to="HUD" method="_on_mode_pressed"]
+[connection signal="pressed" from="HUD/Control/TopBar/LevelUpBtn" to="HUD" method="_on_level_up_pressed"]
+[connection signal="pressed" from="HUD/Control/ForgePanel/SharpBtn" to="HUD" method="_on_upgrade_sharpness_pressed"]
+[connection signal="pressed" from="HUD/Control/ForgePanel/SwiftBtn" to="HUD" method="_on_upgrade_swiftness_pressed"]
+[connection signal="pressed" from="HUD/Control/ForgePanel/CritBtn" to="HUD" method="_on_upgrade_crit_pressed"]
+[connection signal="pressed" from="HUD/Control/ForgePanel/VampBtn" to="HUD" method="_on_upgrade_vamp_pressed"]
+[connection signal="pressed" from="HUD/Control/ForgePanel/SoulBtn" to="HUD" method="_on_upgrade_soul_pressed"]
+[connection signal="pressed" from="HUD/Control/ForgePanel/SizeBtn" to="HUD" method="_on_upgrade_size_pressed"]
