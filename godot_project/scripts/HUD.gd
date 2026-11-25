@@ -105,59 +105,63 @@ func _label(parent: Node, text: String, pos: Vector2, size: Vector2, fs: int = 1
 
 func _build_top_left() -> void:
 	var panel := Panel.new()
-	panel.position = Vector2(16, 12)
-	panel.size = Vector2(520, 102)
-	panel.add_theme_stylebox_override("panel", _panel_style(Color(0.05,0.08,0.18,0.72), Color(0.3,0.65,1.0,0.45), 16))
+	panel.name = "TopLeftPanel"
+	panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	panel.offset_left = 16.0
+	panel.offset_top = 14.0
+	panel.offset_right = 530.0
+	panel.offset_bottom = 118.0
+	panel.add_theme_stylebox_override("panel", _panel_style(Color(0.05,0.08,0.18,0.74), Color(0.3,0.65,1.0,0.45), 16))
 	ui_root.add_child(panel)
 
 	var portrait_bg := Panel.new()
-	portrait_bg.position = Vector2(10, 10)
-	portrait_bg.size = Vector2(82, 82)
-	portrait_bg.add_theme_stylebox_override("panel", _panel_style(Color(0.12,0.18,0.35,0.95), Color(0.45,0.85,1.0,0.95), 41, 3))
+	portrait_bg.position = Vector2(10, 12)
+	portrait_bg.size = Vector2(80, 80)
+	portrait_bg.add_theme_stylebox_override("panel", _panel_style(Color(0.12,0.18,0.35,0.95), Color(0.45,0.85,1.0,0.95), 40, 3))
 	panel.add_child(portrait_bg)
 	var portrait_tex := TextureRect.new()
 	portrait_tex.texture = load("res://assets/ui/portrait.png")
-	portrait_tex.position = Vector2(5,5)
+	portrait_tex.position = Vector2(4,4)
 	portrait_tex.size = Vector2(72,72)
 	portrait_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	portrait_bg.add_child(portrait_tex)
 
-	lvl_text = _label(panel, "Nv. 1", Vector2(102, 8), Vector2(76, 28), 24, Color(1.0,0.93,0.55))
-	sword_text = _label(panel, "Espada de Madera Ancestral", Vector2(180, 12), Vector2(330, 22), 14, Color(0.88,0.94,1.0,0.95))
+	lvl_text = _label(panel, "Nv. 1", Vector2(100, 10), Vector2(72, 26), 22, Color(1.0,0.93,0.55))
+	sword_text = _label(panel, "Espada de Madera Ancestral", Vector2(176, 12), Vector2(330, 22), 13, Color(0.88,0.94,1.0,0.95))
 	sword_text.clip_text = true
 	sword_text.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 
-	_label(panel, "❤", Vector2(102, 40), Vector2(22, 20), 14, Color(0.25,1.0,0.45))
+	_label(panel, "❤", Vector2(100, 42), Vector2(20, 20), 14, Color(0.25,1.0,0.45))
 	hp_bar_new = ProgressBar.new()
-	hp_bar_new.position = Vector2(124, 42); hp_bar_new.size = Vector2(280, 16)
+	hp_bar_new.position = Vector2(122, 44); hp_bar_new.size = Vector2(276, 16)
 	hp_bar_new.show_percentage = false
 	hp_bar_new.add_theme_stylebox_override("background", _panel_style(Color(0.12,0.05,0.08,0.92), Color(1,1,1,0.1), 8))
 	hp_bar_new.add_theme_stylebox_override("fill", _panel_style(Color(0.2,0.88,0.35,0.96), Color(0.6,1,0.6,0.45), 8))
 	panel.add_child(hp_bar_new)
-	hp_text = _label(panel, "220 / 220", Vector2(410, 40), Vector2(100, 20), 12, Color(0.92,1,0.92), HORIZONTAL_ALIGNMENT_RIGHT)
+	hp_text = _label(panel, "220 / 220", Vector2(402, 42), Vector2(104, 20), 12, Color(0.92,1,0.92), HORIZONTAL_ALIGNMENT_RIGHT)
 
-	_label(panel, "EXP", Vector2(102, 66), Vector2(34, 18), 12, Color(0.55,0.82,1.0))
+	_label(panel, "EXP", Vector2(100, 70), Vector2(32, 18), 12, Color(0.55,0.82,1.0))
 	xp_bar_new = ProgressBar.new()
-	xp_bar_new.position = Vector2(138, 68); xp_bar_new.size = Vector2(266, 12)
+	xp_bar_new.position = Vector2(134, 72); xp_bar_new.size = Vector2(264, 12)
 	xp_bar_new.show_percentage = false
 	xp_bar_new.add_theme_stylebox_override("background", _panel_style(Color(0.05,0.08,0.14,0.92), Color(1,1,1,0.08), 6))
 	xp_bar_new.add_theme_stylebox_override("fill", _panel_style(Color(0.25,0.65,1.0,0.96), Color(0.6,0.9,1.0,0.45), 6))
 	panel.add_child(xp_bar_new)
-	xp_text = _label(panel, "0%", Vector2(410, 64), Vector2(100, 18), 12, Color(0.8,0.92,1.0), HORIZONTAL_ALIGNMENT_RIGHT)
+	xp_text = _label(panel, "0%", Vector2(402, 68), Vector2(104, 18), 12, Color(0.8,0.92,1.0), HORIZONTAL_ALIGNMENT_RIGHT)
 
 func _build_top_center() -> void:
 	var panel := Panel.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	panel.offset_left = -180.0
-	panel.offset_right = 180.0
+	panel.offset_left = -150.0
+	panel.offset_right = 170.0
 	panel.offset_top = 14.0
-	panel.offset_bottom = 58.0
+	panel.offset_bottom = 54.0
 	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	panel.add_theme_stylebox_override("panel", _panel_style(Color(0.06,0.08,0.16,0.65), Color(0.4,0.6,1.0,0.25), 12))
 	ui_root.add_child(panel)
-	gold_text = _label(panel, "🪙 60", Vector2(20, 6), Vector2(130, 32), 20, Color(1.0,0.86,0.35))
-	wave_text = _label(panel, "💀 Oleada 1 / 8", Vector2(160, 6), Vector2(180, 32), 18, Color(0.9,0.92,1.0))
+	gold_text = _label(panel, "🪙 60", Vector2(16, 4), Vector2(120, 32), 18, Color(1.0,0.86,0.35))
+	wave_text = _label(panel, "💀 Oleada 1 / 8", Vector2(140, 4), Vector2(170, 32), 16, Color(0.9,0.92,1.0))
 
 func _build_top_right() -> void:
 	var panel := HBoxContainer.new()
@@ -306,8 +310,8 @@ func _build_boss_bar() -> void:
 	boss_panel.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	boss_panel.offset_left = -260.0
 	boss_panel.offset_right = 260.0
-	boss_panel.offset_top = 76.0
-	boss_panel.offset_bottom = 122.0
+	boss_panel.offset_top = 86.0
+	boss_panel.offset_bottom = 132.0
 	boss_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	boss_panel.add_theme_stylebox_override("panel", _panel_style(Color(0.12,0.03,0.03,0.72), Color(1,0.35,0.25,0.5), 10))
 	ui_root.add_child(boss_panel)
