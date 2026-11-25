@@ -48,3 +48,9 @@
 - Fix runtime: `player_ref` -> `player` en HUD.
 - QA visual smoke 4 resoluciones (capturas): `videos/hud_1280x720.png`, `videos/hud_1366x768.png`, `videos/hud_1600x900.png`, `videos/hud_1920x1080.png`.
 - Tests headless: 70/70 PASS.
+
+## 2026-11-24 (sistemas)
+- Monstruos: IA distinta por tipo (slime hop, goblin strafe, skeleton lunge, troll regen, wraith dash, orc pesado) + gravedad/animaciones procedurales.
+- Malakor/boss: guardia anti-duplicado, recompensa extra 1.5x, log de derrota, VFX de derrota.
+- Audio: SFX WAV procedurales básicos (hit/swing/levelup/boss/ui) y cableado en Player/Monster.
+- HUD: fixes 1366 (overflow top-left, iconos recortados en slots, reagrupado top).

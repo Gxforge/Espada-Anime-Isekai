@@ -116,3 +116,11 @@ See `docs/KNOWN_ISSUES.md`.
 | CI GitHub strict | NOT TESTED | workflow reescrito, sin ejecución verificada en esta sesión |
 | Exports Windows/Linux | NOT TESTED | presets presentes, no verificados |
 | Audio/Performance measurements | NOT TESTED/PARTIAL | toggle calidad/audio básico; sin medición FPS |
+
+## Actualización 2026-11-24 (sistemas)
+| Área | Estado | Evidencia |
+|---|---|---|
+| IA distinta 7 monstruos | PARTIAL | `Monster.gd` `_basic_ai` por id; falta validación gameplay exhaustiva |
+| Malakor boss encounter | PARTIAL | telegraph/slam/charge/recover, recompensa/VFX derrota, guardia duplicado; falta secuencia completa/cinemática |
+| Audio | PARTIAL | SFX WAV básicos en `assets/audio`, cableado; falta música/mezcla/config avanzada |
+| HUD 1366/responsive | PARTIAL | fixes overflow/slots/top; smoke 4 resoluciones; falta QA interactiva completa |
