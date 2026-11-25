@@ -120,3 +120,33 @@ static func _add_tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> voi
 static func _add_quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3) -> void:
 	_add_tri(st, a, b, c)
 	_add_tri(st, a, c, d)
+
+static func create_crescent_wave(radius: float, width: float) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var segments := 18
+	for i in range(segments):
+		var tA := (float(i) / segments - 0.5) * PI * 0.85
+		var tB := (float(i + 1) / segments - 0.5) * PI * 0.85
+		var taperA := cos((float(i) / segments - 0.5) * PI)
+		var taperB := cos((float(i + 1) / segments - 0.5) * PI)
+		var rOuterA: float = radius
+		var rInnerA: float = radius - width * maxf(0.12, taperA)
+		var rOuterB: float = radius
+		var rInnerB: float = radius - width * maxf(0.12, taperB)
+		var xOA: float = sin(tA) * rOuterA; var zOA: float = cos(tA) * rOuterA
+		var xIA: float = sin(tA) * rInnerA; var zIA: float = cos(tA) * rInnerA
+		var xOB: float = sin(tB) * rOuterB; var zOB: float = cos(tB) * rOuterB
+		var xIB: float = sin(tB) * rInnerB; var zIB: float = cos(tB) * rInnerB
+		var OAt := Vector3(xOA, 0.04*taperA, zOA)
+		var IAt := Vector3(xIA, 0.04*taperA, zIA)
+		var OBt := Vector3(xOB, 0.04*taperB, zOB)
+		var IBt := Vector3(xIB, 0.04*taperB, zIB)
+		var OAb := Vector3(xOA, -0.04*taperA, zOA)
+		var IAb := Vector3(xIA, -0.04*taperA, zIA)
+		var OBb := Vector3(xOB, -0.04*taperB, zOB)
+		var IBb := Vector3(xIB, -0.04*taperB, zIB)
+		_add_quad(st, IAt, OAt, OBt, IBt)
+		_add_quad(st, OAb, IAb, IBb, OBb)
+	st.generate_normals()
+	return st.commit()

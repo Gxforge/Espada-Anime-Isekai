@@ -147,6 +147,7 @@ func _handle_combat(delta: float) -> void:
 		sword_pivot.rotation.y += 24.0 * delta
 		if whirlwind_tick >= 0.22:
 			whirlwind_tick = 0.0
+			_spawn_shockwave(global_position, current_tier["slash_color"], float(stats["range"]) * 1.2)
 			_deal_aoe_damage(float(stats["range"]) * 1.25, float(stats["damage"]) * 0.75, 4.0)
 
 func _aim_at_mouse() -> void:
@@ -182,14 +183,17 @@ func perform_skill(skill: String) -> void:
 			cooldowns["whirlwind"] = cd_max["whirlwind"]
 			whirlwind_timer = 1.1
 			whirlwind_tick = 0.0
+			_spawn_shockwave(global_position, current_tier["aura_color"], float(stats["range"]) * 1.4)
 			log_added.emit("¡Torbellino desatado!", "skill")
 		"wave":
 			cooldowns["swordWave"] = cd_max["swordWave"]
 			_spawn_wave_projectile()
+			_spawn_shockwave(global_position + Vector3(sin(rotation.y),0,cos(rotation.y))*1.5, current_tier["slash_color"], 3.0)
 			log_added.emit("¡Onda Cortante lanzada!", "skill")
 		"ultimate":
 			cooldowns["ultimate"] = cd_max["ultimate"]
 			_spawn_ultimate_swords()
+			_spawn_shockwave(global_position, current_tier["aura_color"], 6.0)
 			log_added.emit("¡Lluvia de Espadas Celestiales!", "skill")
 		"dash":
 			cooldowns["dash"] = cd_max["dash"]
@@ -223,21 +227,20 @@ func _deal_aoe_damage(radius: float, dmg: float, knockback: float) -> void:
 			enemy.take_damage(dmg, self, false, knockback)
 
 func _spawn_wave_projectile() -> void:
+	var CG = load("res://scripts/CustomGeometry.gd")
 	var scene_root := get_tree().current_scene
 	var proj := Node3D.new()
 	proj.name = "SwordWave"
 	var mesh_inst := MeshInstance3D.new()
-	var ring := TorusMesh.new()
-	ring.inner_radius = 0.8
-	ring.outer_radius = 1.6
-	mesh_inst.mesh = ring
+	mesh_inst.mesh = CG.create_crescent_wave(2.3, 0.85)
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = current_tier["slash_color"]
+	mat.albedo_color = Color(current_tier["slash_color"], 0.95)
 	mat.emission_enabled = true
 	mat.emission = current_tier["slash_color"]
-	mat.emission_energy_multiplier = 2.0
+	mat.emission_energy_multiplier = 3.0
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mesh_inst.material_override = mat
-	mesh_inst.rotation.x = PI / 2.0
 	proj.add_child(mesh_inst)
 	proj.global_position = global_position + Vector3(0, 1.3, 0)
 	proj.rotation.y = rotation.y
@@ -247,6 +250,7 @@ func _spawn_wave_projectile() -> void:
 	proj.setup(Vector3(sin(rotation.y), 0, cos(rotation.y)) * 20.0, float(stats["damage"]) * 1.9, self)
 
 func _spawn_ultimate_swords() -> void:
+	var SwordBuilderScript = load("res://scripts/SwordBuilder.gd")
 	var scene_root := get_tree().current_scene
 	for i in range(7):
 		var angle := (float(i) / 7.0) * TAU
@@ -254,22 +258,16 @@ func _spawn_ultimate_swords() -> void:
 		var target := global_position + Vector3(sin(angle) * dist, 0, cos(angle) * dist)
 		var node := Node3D.new()
 		node.name = "SkySword_%d" % i
-		var mesh_inst := MeshInstance3D.new()
-		var box := BoxMesh.new()
-		box.size = Vector3(0.3, 3.0, 0.15)
-		mesh_inst.mesh = box
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = current_tier["blade_color"]
-		mat.emission_enabled = true
-		mat.emission = current_tier["aura_color"]
-		mat.emission_energy_multiplier = 2.5
-		mesh_inst.material_override = mat
-		node.add_child(mesh_inst)
+		var sword_visual: Node3D = SwordBuilderScript.build_sword(str(current_tier["id"]), sword_level)
+		sword_visual.scale = Vector3.ONE * 1.6
+		# Point blade downward
+		sword_visual.rotation.z = PI
+		node.add_child(sword_visual)
 		node.global_position = target + Vector3(0, 18.0 + i * 2.2, 0)
 		scene_root.add_child(node)
 		var script := preload("res://scripts/SkySword.gd")
 		node.set_script(script)
-		node.setup(target, float(stats["damage"]) * 2.5, self)
+		node.setup(target, float(stats["damage"]) * 2.5, self, float(i) * 0.08)
 
 func take_player_damage(amount: int) -> void:
 	if dash_timer > 0.0:
@@ -434,21 +432,42 @@ func _update_sword_anim(delta: float) -> void:
 			if mat.albedo_color.a <= 0.01:
 				slash_ring.visible = false
 
+func _spawn_shockwave(pos: Vector3, color: Color, max_radius: float = 4.0) -> void:
+	var ring := MeshInstance3D.new()
+	var torus := TorusMesh.new()
+	torus.inner_radius = 0.3
+	torus.outer_radius = 0.6
+	ring.mesh = torus
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(color, 0.85)
+	mat.emission_enabled = true
+	mat.emission = color
+	mat.emission_energy_multiplier = 2.5
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	ring.material_override = mat
+	ring.global_position = Vector3(pos.x, 0.08, pos.z)
+	get_tree().current_scene.add_child(ring)
+	var tw := get_tree().current_scene.create_tween()
+	tw.tween_property(ring, "scale", Vector3(max_radius, 1.0, max_radius), 0.3)
+	tw.parallel().tween_property(mat, "albedo_color:a", 0.0, 0.3)
+	tw.tween_callback(ring.queue_free)
+
 func _show_slash() -> void:
+	var CG = load("res://scripts/CustomGeometry.gd")
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(current_tier["slash_color"], 0.9)
 	mat.emission_enabled = true
 	mat.emission = current_tier["slash_color"]
-	mat.emission_energy_multiplier = 2.0
+	mat.emission_energy_multiplier = 3.0
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	slash_ring.material_override = mat
-	var torus := TorusMesh.new()
-	torus.inner_radius = float(stats["range"]) * 0.5
-	torus.outer_radius = float(stats["range"]) * 0.7
-	slash_ring.mesh = torus
+	var crescent = CG.create_crescent_wave(float(stats["range"]) * 0.85, 1.1)
+	slash_ring.mesh = crescent
 	slash_ring.visible = true
-	slash_ring.rotation.y = 0
+	slash_ring.rotation = Vector3(0, 0, 0)
+	slash_ring.position.y = 1.25
 
 func _find_nearest_enemy() -> Node3D:
 	var nearest: Node3D = null
