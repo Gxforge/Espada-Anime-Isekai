@@ -42,3 +42,9 @@
 - **Death/Game Over**: `player_died` signal, `is_dead`/`invuln_timer`, respawn flow and game-over overlay in HUD.
 - **Save on exit**: `Main.gd` saves on `NOTIFICATION_WM_CLOSE_REQUEST`.
 - **Tests**: expanded to 67 passing checks (player death/respawn, boss AI markers).
+
+## 2026-11-24 (continuación HUD/QA)
+- HUD: iconos programáticos para Q/E/R/Shift, paneles funcionales Ajustes/Inventario/Estadísticas, botón "Mejorar" en forja, branding Studio Lexair, minimapa básico, anclajes mejorados.
+- Fix runtime: `player_ref` -> `player` en HUD.
+- QA visual smoke 4 resoluciones (capturas): `videos/hud_1280x720.png`, `videos/hud_1366x768.png`, `videos/hud_1600x900.png`, `videos/hud_1920x1080.png`.
+- Tests headless: 70/70 PASS.

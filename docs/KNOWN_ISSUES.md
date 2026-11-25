@@ -21,3 +21,8 @@
 7. **Player.gd still large** — responsibilities should be split further.
 8. **CI export depends on runner templates** — strict workflow will fail clearly if templates are missing, but GitHub environment must provide Godot 4.4 export templates.
 9. **No full regression suite** — current tests cover data/resources/basic invariants; combat/scene integration tests need expansion.
+
+- HUD más cercano a la referencia, pero no paridad visual 1:1 (arte/iconografía final, tipografía/estilo exacto, minimapa detallado).
+- Ajustes de calidad/audio son funcionales básicos; faltan assets de audio reales y opciones avanzadas.
+- Inventario/Stats funcionales básicos; falta inventario completo de ítems/materiales si el diseño original lo requiere.
+- QA 4 resoluciones: capturas smoke realizadas; falta verificación interactiva completa en cada resolución.

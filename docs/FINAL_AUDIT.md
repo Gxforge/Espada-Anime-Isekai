@@ -103,3 +103,16 @@ See `docs/KNOWN_ISSUES.md`.
 | Documentation complete | PARTIAL | Baseline + final audit/docs created; some reports need measurements. |
 | No original feature silently removed | PASS | No intentional removals; web reference preserved. |
 | No known critical issue remains undocumented | PASS | Known issues documented in `docs/KNOWN_ISSUES.md`. |
+
+
+## Actualización 2026-11-24 (HUD/QA)
+| Área | Estado | Evidencia |
+|---|---|---|
+| HUD estilo referencia | PARTIAL | `godot_project/scripts/HUD.gd`, `videos/hud_refstyle_fix.png`, capturas 4 resoluciones |
+| Minimap/branding/combo | PARTIAL | visible en capturas; minimapa básico |
+| Inventario/Stats/Ajustes | PARTIAL | paneles funcionales básicos en HUD |
+| QA 4 resoluciones | PARTIAL (smoke) | `videos/hud_1280x720.png`, `hud_1366x768.png`, `hud_1600x900.png`, `hud_1920x1080.png` |
+| Tests headless | PASS (70/70) | `godot_project/tests/run_tests.gd` |
+| CI GitHub strict | NOT TESTED | workflow reescrito, sin ejecución verificada en esta sesión |
+| Exports Windows/Linux | NOT TESTED | presets presentes, no verificados |
+| Audio/Performance measurements | NOT TESTED/PARTIAL | toggle calidad/audio básico; sin medición FPS |
