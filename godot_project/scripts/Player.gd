@@ -369,7 +369,7 @@ func _recalc_stats() -> void:
 	var sharp_mult := 1.0 + int(upgrades["sharpness"]) * 0.18
 	var dmg := int(round(float(current_tier["base_damage"]) * level_bonus * sharp_mult))
 	var atk_speed := float(current_tier["attack_speed"]) * (1.0 + int(upgrades["swiftness"]) * 0.08)
-	var crit := min(0.95, float(current_tier["crit_chance"]) + int(upgrades["criticalMastery"]) * 0.04)
+	var crit: float = minf(0.95, float(current_tier["crit_chance"]) + int(upgrades["criticalMastery"]) * 0.04)
 	var crit_mult := 1.85 + int(upgrades["criticalMastery"]) * 0.15 + (0.65 if str(current_tier["id"]) == "celestial" else 0.0)
 	var rng := float(current_tier["range"]) * (1.0 + int(upgrades["bladeSize"]) * 0.06)
 	var life_on_hit := int(upgrades["vampirism"]) * 3 + (14 if str(current_tier["id"]) == "obsidian" else 0)
@@ -382,25 +382,20 @@ func _recalc_stats() -> void:
 func _refresh_sword_visual() -> void:
 	for c in sword_mesh_holder.get_children():
 		c.queue_free()
-	var model_path: String = str(current_tier.get("model_path", ""))
-	if ResourceLoader.exists(model_path):
-		var res = load(model_path)
-		if res:
-			var mi := MeshInstance3D.new()
-			mi.mesh = res
-			var mat := StandardMaterial3D.new()
-			mat.albedo_color = current_tier["blade_color"]
-			mat.metallic = 0.7
-			mat.roughness = 0.3
-			mat.emission_enabled = true
-			mat.emission = current_tier["aura_color"]
-			mat.emission_energy_multiplier = 0.6
-			mi.material_override = mat
-			var scale_mult := 1.0 + int(upgrades["bladeSize"]) * 0.06
-			var base_scale := 0.9 * scale_mult
-			mi.scale = Vector3.ONE * base_scale
-			mi.rotation_degrees = Vector3(-90, 0, 0)
-			sword_mesh_holder.add_child(mi)
+	var SwordBuilderScript = load("res://scripts/SwordBuilder.gd")
+	var built: Node3D = SwordBuilderScript.build_sword(str(current_tier["id"]), sword_level)
+	var blade_pivot_node: Node3D = built.get_node_or_null("BladePivot")
+	var scale_mult := 1.0 + int(upgrades["bladeSize"]) * 0.06
+	var base_scale := (0.88 * scale_mult) if wielder_mode == "knight_wielder" else (1.12 * scale_mult)
+	if blade_pivot_node:
+		for child in blade_pivot_node.get_children():
+			blade_pivot_node.remove_child(child)
+			sword_mesh_holder.add_child(child)
+			child.scale = child.scale * base_scale
+	else:
+		sword_mesh_holder.add_child(built)
+		built.scale = Vector3.ONE * base_scale
+	built.queue_free()
 	# knight visibility
 	knight_holder.visible = wielder_mode == "knight_wielder"
 	if wielder_mode == "knight_wielder":

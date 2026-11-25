@@ -44,33 +44,12 @@ func setup(monster_def: Dictionary, wave: int, player_ref: Node3D) -> void:
 func _load_model() -> void:
 	for c in model_holder.get_children():
 		c.queue_free()
-	var path: String = str(def.get("model_path", ""))
-	if ResourceLoader.exists(path):
-		var res = load(path)
-		if res:
-			var mi := MeshInstance3D.new()
-			mi.mesh = res
-			var mat := StandardMaterial3D.new()
-			mat.albedo_color = def.get("primary_color", Color.WHITE)
-			mat.roughness = 0.6
-			mat.metallic = 0.2
-			mat.emission_enabled = true
-			mat.emission = def.get("accent_color", Color.BLACK)
-			mat.emission_energy_multiplier = 0.35
-			mi.material_override = mat
-			mi.rotation_degrees = Vector3(-90, 0, 0)
-			model_holder.add_child(mi)
-	else:
-		# fallback primitive
-		var mi := MeshInstance3D.new()
-		var cap := CapsuleMesh.new()
-		cap.radius = 0.5
-		cap.height = 1.5
-		mi.mesh = cap
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = def.get("primary_color", Color.RED)
-		mi.material_override = mat
-		model_holder.add_child(mi)
+	var Builder = load("res://scripts/MonsterBuilder.gd")
+	var built: Node3D = Builder.build_monster(str(def.get("id", "slime")))
+	for child in built.get_children():
+		built.remove_child(child)
+		model_holder.add_child(child)
+	built.queue_free()
 
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(player):
