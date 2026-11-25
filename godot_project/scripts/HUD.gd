@@ -258,12 +258,16 @@ func _build_bottom_skills() -> void:
 		panel.add_child(wrap)
 		var box := Panel.new()
 		box.custom_minimum_size = Vector2(120, 86)
+		box.clip_contents = true
 		box.add_theme_stylebox_override("panel", _panel_style(Color(0.06,0.12,0.24,0.82), Color(0.35,0.7,1.0,0.65), 14))
 		wrap.add_child(box)
 		var icon := TextureRect.new()
 		icon.texture = load(s[3])
-		icon.position = Vector2(24, 8)
-		icon.size = Vector2(72, 56)
+		icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+		icon.offset_left = 18.0
+		icon.offset_right = -18.0
+		icon.offset_top = 14.0
+		icon.offset_bottom = -20.0
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		box.add_child(icon)
