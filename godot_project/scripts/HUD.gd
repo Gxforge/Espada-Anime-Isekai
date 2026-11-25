@@ -21,7 +21,11 @@ var boss_label: Label
 var game_over_panel: Panel
 var game_over_label: Label
 
+var pause_panel: Panel
+var cd_labels: Dictionary = {}
+
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_style_ui()
 	_build_extra_ui()
 
@@ -134,6 +138,8 @@ func connect_player(p: Player) -> void:
 	player.log_added.connect(_on_log)
 	if player.has_signal("player_died"):
 		player.player_died.connect(_on_player_died)
+	if player.has_signal("cooldowns_changed"):
+		player.cooldowns_changed.connect(_on_cooldowns_changed)
 	_on_hp(player.player_hp, player.player_max_hp)
 	_on_xp(player.current_xp, GameData.get_xp_required(player.sword_level), player.sword_level)
 	_on_gold(player.gold)
@@ -285,8 +291,12 @@ func _build_extra_ui() -> void:
 	respawn_btn.pressed.connect(_on_respawn_pressed)
 	game_over_panel.add_child(respawn_btn)
 
+	_build_pause_ui()
+	_build_cooldown_ui()
+
 func _process(_delta: float) -> void:
 	_update_boss_bar()
+	_update_cooldowns()
 
 func _update_boss_bar() -> void:
 	if boss_panel == null:
@@ -314,3 +324,102 @@ func _on_respawn_pressed() -> void:
 		player.respawn_player()
 	if game_over_panel:
 		game_over_panel.visible = false
+
+func _build_pause_ui() -> void:
+	var control := $Control
+	pause_panel = Panel.new()
+	pause_panel.name = "PausePanel"
+	pause_panel.visible = false
+	pause_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.02,0.02,0.04,0.72)
+	pause_panel.add_theme_stylebox_override("panel", sb)
+	control.add_child(pause_panel)
+
+	var box := VBoxContainer.new()
+	box.anchor_left = 0.5; box.anchor_right = 0.5
+	box.anchor_top = 0.5; box.anchor_bottom = 0.5
+	box.offset_left = -140; box.offset_right = 140
+	box.offset_top = -120; box.offset_bottom = 120
+	box.add_theme_constant_override("separation", 10)
+	pause_panel.add_child(box)
+
+	var title := Label.new()
+	title.text = "PAUSA"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 32)
+	title.add_theme_color_override("font_color", Color(1,0.9,0.7,1))
+	box.add_child(title)
+
+	var resume := Button.new(); resume.text = "Continuar"; _style_button(resume); resume.pressed.connect(_on_resume_pressed); box.add_child(resume)
+	var saveb := Button.new(); saveb.text = "Guardar"; _style_button(saveb); saveb.pressed.connect(_on_save_pressed); box.add_child(saveb)
+	var quitb := Button.new(); quitb.text = "Salir al escritorio"; _style_button(quitb); quitb.pressed.connect(_on_quit_pressed); box.add_child(quitb)
+
+func _build_cooldown_ui() -> void:
+	var control := $Control
+	var panel := HBoxContainer.new()
+	panel.name = "CooldownPanel"
+	panel.anchor_left = 0.5; panel.anchor_right = 0.5
+	panel.anchor_top = 1.0; panel.anchor_bottom = 1.0
+	panel.offset_left = -180; panel.offset_right = 180
+	panel.offset_top = -44; panel.offset_bottom = -12
+	panel.alignment = BoxContainer.ALIGNMENT_CENTER
+	panel.add_theme_constant_override("separation", 8)
+	control.add_child(panel)
+	for item in [["Q","whirlwind"],["E","swordWave"],["R","ultimate"],["Shift","dash"]]:
+		var lbl := Label.new()
+		lbl.text = "%s: OK" % item[0]
+		lbl.add_theme_font_size_override("font_size", 12)
+		lbl.add_theme_color_override("font_color", Color(0.9,0.95,1.0,0.9))
+		lbl.add_theme_color_override("font_outline_color", Color(0,0,0,0.7))
+		lbl.add_theme_constant_override("outline_size", 2)
+		panel.add_child(lbl)
+		cd_labels[item[1]] = lbl
+
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		_toggle_pause()
+
+func _toggle_pause() -> void:
+	if game_over_panel and game_over_panel.visible:
+		return
+	var paused := not get_tree().paused
+	get_tree().paused = paused
+	if pause_panel:
+		pause_panel.visible = paused
+
+func _on_resume_pressed() -> void:
+	get_tree().paused = false
+	if pause_panel: pause_panel.visible = false
+
+func _on_save_pressed() -> void:
+	if player and has_node("/root/SaveSystem"):
+		get_node("/root/SaveSystem").save_game(player)
+		_on_log("Partida guardada.", "upgrade")
+
+func _on_quit_pressed() -> void:
+	if player and has_node("/root/SaveSystem"):
+		get_node("/root/SaveSystem").save_game(player)
+	get_tree().quit()
+
+func _on_cooldowns_changed(_cds: Dictionary) -> void:
+	_update_cooldowns()
+
+func _update_cooldowns() -> void:
+	if player == null:
+		return
+	var cds = player.get("cooldowns")
+	if cds == null:
+		return
+	var map = {"Q":"whirlwind","E":"swordWave","R":"ultimate","Shift":"dash"}
+	for key in map.keys():
+		var id = map[key]
+		if cd_labels.has(id):
+			var v = float(cds.get(id, 0.0))
+			var lbl: Label = cd_labels[id]
+			if v > 0.05:
+				lbl.text = "%s: %.1fs" % [key, v]
+				lbl.add_theme_color_override("font_color", Color(1.0,0.6,0.5,0.95))
+			else:
+				lbl.text = "%s: OK" % key
+				lbl.add_theme_color_override("font_color", Color(0.6,1.0,0.7,0.95))

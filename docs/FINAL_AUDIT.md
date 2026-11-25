@@ -94,9 +94,9 @@ See `docs/KNOWN_ISSUES.md`.
 | Malakor boss encounter works | PARTIAL | Boss HP bar + telegraph/slam/charge/recover added; still needs full defeat sequence/balance. |
 | XP, gold, wave progression work | PARTIAL | Implemented; automated regression limited. |
 | Save and load work | PARTIAL | SaveSystem implemented; needs in-game QA. |
-| Death and respawn work | PARTIAL | Game-over overlay + respawn + invuln added; needs polish. |
+| Death and respawn work | PARTIAL | Game-over overlay + respawn + invuln + save on respawn added; needs polish. |
 | HUD works at supported resolutions | NOT TESTED | Layout uses canvas_items/anchors; no multi-resolution QA run. |
-| Automated tests pass | PASS | 67/67 local headless checks pass. |
+| Automated tests pass | PASS | 70/70 local headless checks pass. |
 | GitHub Actions passes without ignored failures | NOT TESTED | Workflow rewritten strict; not executed on GitHub this session. |
 | Windows export generated and verified | NOT TESTED | Preset added; export not run. |
 | Linux export generated and verified | NOT TESTED | Preset present; export not run. |

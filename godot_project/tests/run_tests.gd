@@ -17,6 +17,7 @@ func _init() -> void:
 	test_sword_builder()
 	test_player_new_features()
 	test_monster_boss_ai()
+	test_hud_pause_and_cooldowns()
 	print("=== RESULTS: %d passed, %d failed ===" % [passes, failures.size()])
 	for f in failures:
 		print("FAIL: ", f)
@@ -142,3 +143,10 @@ func test_monster_boss_ai() -> void:
 	assert_true(src.find("func _boss_ai") != -1, "Monster has boss AI")
 	assert_true(src.find("telegraph_slam") != -1, "Boss has slam telegraph")
 	assert_true(src.find("telegraph_charge") != -1, "Boss has charge telegraph")
+
+func test_hud_pause_and_cooldowns() -> void:
+	var f = FileAccess.open("res://scripts/HUD.gd", FileAccess.READ)
+	var src = f.get_as_text(); f.close()
+	assert_true(src.find("_build_pause_ui") != -1, "HUD has pause UI")
+	assert_true(src.find("_build_cooldown_ui") != -1, "HUD has cooldown UI")
+	assert_true(src.find("get_tree().paused") != -1, "HUD toggles pause")

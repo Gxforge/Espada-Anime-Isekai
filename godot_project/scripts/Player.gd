@@ -324,6 +324,8 @@ func respawn_player() -> void:
 	invuln_timer = 2.0
 	hp_changed.emit(player_hp, player_max_hp)
 	log_added.emit("¡La Forja Ancestral te restaura!", "upgrade")
+	if has_node("/root/SaveSystem"):
+		get_node("/root/SaveSystem").save_game(self)
 
 func gain_experience(amount: int) -> void:
 	current_xp += amount

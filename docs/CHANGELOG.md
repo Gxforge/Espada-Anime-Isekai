@@ -31,3 +31,14 @@
 - **Death/Game Over**: `player_died` signal, `is_dead`/`invuln_timer`, respawn flow and game-over overlay in HUD.
 - **Save on exit**: `Main.gd` saves on `NOTIFICATION_WM_CLOSE_REQUEST`.
 - **Tests**: expanded to 67 passing checks (player death/respawn, boss AI markers).
+
+### Continuation pass 2
+- **Pausa**: menú de pausa (Esc) con Continuar/Guardar/Salir, `process_mode ALWAYS`.
+- **Cooldown HUD**: indicadores Q/E/R/Shift en HUD.
+- **Respawn save**: guarda al reaparecer.
+- **Tests**: 70 checks pasando.
+- **Boss Malakor**: added boss AI state machine in `Monster.gd` (chase/telegraph slam/slam/telegraph charge/charge/recover), telegraph VFX, AoE slam damage.
+- **HUD boss HP**: runtime boss HP panel/bar in `HUD.gd`.
+- **Death/Game Over**: `player_died` signal, `is_dead`/`invuln_timer`, respawn flow and game-over overlay in HUD.
+- **Save on exit**: `Main.gd` saves on `NOTIFICATION_WM_CLOSE_REQUEST`.
+- **Tests**: expanded to 67 passing checks (player death/respawn, boss AI markers).
