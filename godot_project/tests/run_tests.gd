@@ -147,6 +147,6 @@ func test_monster_boss_ai() -> void:
 func test_hud_pause_and_cooldowns() -> void:
 	var f = FileAccess.open("res://scripts/HUD.gd", FileAccess.READ)
 	var src = f.get_as_text(); f.close()
-	assert_true(src.find("_build_pause_ui") != -1, "HUD has pause UI")
-	assert_true(src.find("_build_cooldown_ui") != -1, "HUD has cooldown UI")
+	assert_true(src.find("_build_pause") != -1 or src.find("_build_pause_ui") != -1, "HUD has pause UI")
+	assert_true(src.find("_build_bottom_skills") != -1 or src.find("_build_cooldown_ui") != -1 or src.find("cd_nodes") != -1, "HUD has cooldown UI")
 	assert_true(src.find("get_tree().paused") != -1, "HUD toggles pause")

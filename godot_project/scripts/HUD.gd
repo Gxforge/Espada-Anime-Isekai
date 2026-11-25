@@ -1,131 +1,300 @@
 extends CanvasLayer
 
-@onready var hp_bar: ProgressBar = $Control/TopBar/HPBar
-@onready var hp_label: Label = $Control/TopBar/HPLabel
-@onready var xp_bar: ProgressBar = $Control/TopBar/XPBar
-@onready var xp_label: Label = $Control/TopBar/XPLabel
-@onready var level_label: Label = $Control/TopBar/LevelLabel
-@onready var sword_name_label: Label = $Control/TopBar/SwordNameLabel
-@onready var gold_label: Label = $Control/TopBar/GoldLabel
-@onready var kills_label: Label = $Control/TopBar/KillsLabel
-@onready var wave_label: Label = $Control/TopBar/WaveLabel
-@onready var log_label: RichTextLabel = $Control/LogPanel/LogLabel
-@onready var evo_banner: Panel = $Control/EvoBanner
-@onready var evo_banner_label: Label = $Control/EvoBanner/EvoLabel
+# Keep legacy onready paths optional for scene compatibility
+@onready var hp_bar: ProgressBar = get_node_or_null("Control/TopBar/HPBar")
+@onready var hp_label: Label = get_node_or_null("Control/TopBar/HPLabel")
+@onready var xp_bar: ProgressBar = get_node_or_null("Control/TopBar/XPBar")
+@onready var xp_label: Label = get_node_or_null("Control/TopBar/XPLabel")
+@onready var level_label: Label = get_node_or_null("Control/TopBar/LevelLabel")
+@onready var sword_name_label: Label = get_node_or_null("Control/TopBar/SwordNameLabel")
+@onready var gold_label: Label = get_node_or_null("Control/TopBar/GoldLabel")
+@onready var kills_label: Label = get_node_or_null("Control/TopBar/KillsLabel")
+@onready var wave_label: Label = get_node_or_null("Control/TopBar/WaveLabel")
+@onready var log_label: RichTextLabel = get_node_or_null("Control/LogPanel/LogLabel")
+@onready var evo_banner: Panel = get_node_or_null("Control/EvoBanner")
+@onready var evo_banner_label: Label = get_node_or_null("Control/EvoBanner/EvoLabel")
 
 var player: Player
 var log_lines: Array[String] = []
+
+# New UI refs
+var ui_root: Control
+var hp_bar_new: ProgressBar
+var hp_text: Label
+var xp_bar_new: ProgressBar
+var xp_text: Label
+var lvl_text: Label
+var sword_text: Label
+var gold_text: Label
+var wave_text: Label
+var objective_text: Label
+var objective_sub: Label
 var boss_panel: Panel
 var boss_bar: ProgressBar
 var boss_label: Label
 var game_over_panel: Panel
-var game_over_label: Label
-
 var pause_panel: Panel
-var cd_labels: Dictionary = {}
+var cd_nodes: Dictionary = {}
+var forge_buttons: Dictionary = {}
+var combo_label: Label
+var combo_timer: float = 0.0
+var combo_count: int = 0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_style_ui()
-	_build_extra_ui()
+	ui_root = get_node_or_null("Control")
+	if ui_root == null:
+		ui_root = Control.new()
+		ui_root.name = "Control"
+		ui_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(ui_root)
+	_clear_legacy_children()
+	_build_ui()
 
-func _style_ui() -> void:
-	var top: Panel = $Control/TopBar
-	var log_panel: Panel = $Control/LogPanel
-	var forge: Panel = $Control/ForgePanel
-	var evo: Panel = $Control/EvoBanner
+func _clear_legacy_children() -> void:
+	for c in ui_root.get_children():
+		c.queue_free()
 
-	_apply_panel_style(top, Color(0.05, 0.07, 0.12, 0.55), Color(0.3, 0.7, 1.0, 0.18), 0)
-	_apply_panel_style(log_panel, Color(0.04, 0.05, 0.09, 0.38), Color(1,1,1,0.06), 10)
-	_apply_panel_style(forge, Color(0.04, 0.05, 0.09, 0.42), Color(1,1,1,0.08), 10)
-	_apply_panel_style(evo, Color(0.12, 0.08, 0.02, 0.72), Color(1.0, 0.75, 0.2, 0.45), 12)
+func _build_ui() -> void:
+	_build_top_left()
+	_build_top_center()
+	_build_top_right()
+	_build_objective()
+	_build_right_forge()
+	_build_bottom_skills()
+	_build_log()
+	_build_boss_bar()
+	_build_game_over()
+	_build_pause()
+	_build_combo()
 
-	_style_bar(hp_bar, Color(0.12, 0.02, 0.04, 0.85), Color(0.9, 0.18, 0.25, 0.95), Color(1.0, 0.45, 0.35, 0.95))
-	_style_bar(xp_bar, Color(0.02, 0.06, 0.12, 0.85), Color(0.2, 0.65, 1.0, 0.95), Color(0.55, 0.9, 1.0, 0.95))
+func _panel_style(bg: Color, border: Color, radius: int = 10, border_w: int = 1) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = bg
+	sb.border_color = border
+	sb.set_border_width_all(border_w)
+	sb.set_corner_radius_all(radius)
+	return sb
 
-	for lbl in [level_label, sword_name_label, xp_label, hp_label, gold_label, kills_label, wave_label]:
-		if lbl:
-			lbl.add_theme_color_override("font_color", Color(0.93, 0.95, 1.0, 0.95))
-			lbl.add_theme_color_override("font_outline_color", Color(0,0,0,0.7))
-			lbl.add_theme_constant_override("outline_size", 3)
+func _label(parent: Node, text: String, pos: Vector2, size: Vector2, fs: int = 14, color: Color = Color.WHITE, align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.position = pos
+	l.size = size
+	l.horizontal_alignment = align
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.add_theme_font_size_override("font_size", fs)
+	l.add_theme_color_override("font_color", color)
+	l.add_theme_color_override("font_outline_color", Color(0,0,0,0.75))
+	l.add_theme_constant_override("outline_size", 3)
+	parent.add_child(l)
+	return l
 
-	level_label.add_theme_font_size_override("font_size", 24)
-	level_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.55, 1.0))
-	sword_name_label.add_theme_font_size_override("font_size", 14)
-	sword_name_label.add_theme_color_override("font_color", Color(0.78, 0.86, 1.0, 0.9))
-	xp_label.add_theme_font_size_override("font_size", 12)
-	hp_label.add_theme_font_size_override("font_size", 12)
-	gold_label.add_theme_font_size_override("font_size", 14)
-	gold_label.add_theme_color_override("font_color", Color(1.0, 0.84, 0.35, 1.0))
-	kills_label.add_theme_font_size_override("font_size", 13)
-	wave_label.add_theme_font_size_override("font_size", 13)
+func _build_top_left() -> void:
+	var panel := Panel.new()
+	panel.position = Vector2(16, 12)
+	panel.size = Vector2(360, 86)
+	panel.add_theme_stylebox_override("panel", _panel_style(Color(0.06,0.08,0.16,0.72), Color(0.35,0.65,1.0,0.35), 14))
+	ui_root.add_child(panel)
 
-	log_label.add_theme_font_size_override("normal_font_size", 12)
-	log_label.add_theme_color_override("default_color", Color(0.85, 0.9, 1.0, 0.82))
+	# portrait circle
+	var portrait := Panel.new()
+	portrait.position = Vector2(8, 8)
+	portrait.size = Vector2(70, 70)
+	portrait.add_theme_stylebox_override("panel", _panel_style(Color(0.15,0.2,0.35,0.9), Color(0.45,0.8,1.0,0.8), 35, 2))
+	panel.add_child(portrait)
+	var picon := Label.new()
+	picon.text = "⚔"
+	picon.position = Vector2(0,0); picon.size = Vector2(70,70)
+	picon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	picon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	picon.add_theme_font_size_override("font_size", 30)
+	portrait.add_child(picon)
 
-	evo_banner_label.add_theme_font_size_override("font_size", 28)
-	evo_banner_label.add_theme_color_override("font_color", Color(1.0, 0.93, 0.65, 1.0))
-	evo_banner_label.add_theme_color_override("font_outline_color", Color(0,0,0,0.8))
-	evo_banner_label.add_theme_constant_override("outline_size", 4)
+	lvl_text = _label(panel, "Nv. 1", Vector2(88, 6), Vector2(120, 24), 22, Color(1,0.95,0.7))
+	sword_text = _label(panel, "Espada de Madera Ancestral", Vector2(150, 8), Vector2(200, 20), 13, Color(0.85,0.92,1.0,0.95))
 
-	# Style buttons
-	for b in _all_buttons():
+	_label(panel, "❤", Vector2(88, 34), Vector2(20, 18), 14, Color(0.3,1.0,0.5))
+	hp_bar_new = ProgressBar.new()
+	hp_bar_new.position = Vector2(108, 36); hp_bar_new.size = Vector2(170, 14)
+	hp_bar_new.show_percentage = false
+	hp_bar_new.add_theme_stylebox_override("background", _panel_style(Color(0.12,0.05,0.08,0.9), Color(1,1,1,0.08), 6))
+	hp_bar_new.add_theme_stylebox_override("fill", _panel_style(Color(0.2,0.85,0.35,0.95), Color(0.6,1,0.6,0.4), 6))
+	panel.add_child(hp_bar_new)
+	hp_text = _label(panel, "220 / 220", Vector2(282, 33), Vector2(70, 18), 11, Color(0.9,1,0.9), HORIZONTAL_ALIGNMENT_RIGHT)
+
+	_label(panel, "EXP", Vector2(88, 56), Vector2(30, 16), 11, Color(0.6,0.85,1.0))
+	xp_bar_new = ProgressBar.new()
+	xp_bar_new.position = Vector2(120, 58); xp_bar_new.size = Vector2(158, 10)
+	xp_bar_new.show_percentage = false
+	xp_bar_new.add_theme_stylebox_override("background", _panel_style(Color(0.05,0.08,0.14,0.9), Color(1,1,1,0.08), 5))
+	xp_bar_new.add_theme_stylebox_override("fill", _panel_style(Color(0.25,0.65,1.0,0.95), Color(0.6,0.9,1.0,0.4), 5))
+	panel.add_child(xp_bar_new)
+	xp_text = _label(panel, "0%", Vector2(282, 54), Vector2(70, 16), 11, Color(0.75,0.9,1.0), HORIZONTAL_ALIGNMENT_RIGHT)
+
+func _build_top_center() -> void:
+	var panel := Panel.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	panel.position = Vector2(-170, 12)
+	panel.size = Vector2(340, 44)
+	panel.add_theme_stylebox_override("panel", _panel_style(Color(0.06,0.08,0.16,0.65), Color(0.4,0.6,1.0,0.25), 12))
+	ui_root.add_child(panel)
+	gold_text = _label(panel, "🪙 60", Vector2(20, 6), Vector2(120, 32), 20, Color(1.0,0.86,0.35))
+	wave_text = _label(panel, "💀 Oleada 1 / 8", Vector2(150, 6), Vector2(170, 32), 18, Color(0.9,0.92,1.0))
+
+func _build_top_right() -> void:
+	var panel := HBoxContainer.new()
+	panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	panel.position = Vector2(-330, 12)
+	panel.size = Vector2(314, 40)
+	panel.add_theme_constant_override("separation", 8)
+	ui_root.add_child(panel)
+	for txt in ["Ajustes", "Pausa", "Inv", "Stats"]:
+		var b := Button.new()
+		b.text = txt
+		b.custom_minimum_size = Vector2(72, 36)
 		_style_button(b)
+		panel.add_child(b)
+		if txt == "Pausa": b.pressed.connect(_toggle_pause)
+		if txt == "Ajustes": b.pressed.connect(func(): _on_log("Ajustes: próximamente", "upgrade"))
+		if txt == "Inv": b.pressed.connect(func(): _on_log("Inventario: próximamente", "upgrade"))
+		if txt == "Stats": b.pressed.connect(func(): _on_log("Stats: próximamente", "upgrade"))
 
-func _all_buttons() -> Array[Button]:
-	var arr: Array[Button] = []
-	var root := $Control
-	for n in [root.get_node_or_null("TopBar/AutoHuntBtn"), root.get_node_or_null("TopBar/ModeBtn"), root.get_node_or_null("TopBar/LevelUpBtn"),
-		root.get_node_or_null("ForgePanel/SharpBtn"), root.get_node_or_null("ForgePanel/SwiftBtn"), root.get_node_or_null("ForgePanel/CritBtn"),
-		root.get_node_or_null("ForgePanel/VampBtn"), root.get_node_or_null("ForgePanel/SoulBtn"), root.get_node_or_null("ForgePanel/SizeBtn")]:
-		if n is Button:
-			arr.append(n)
-	return arr
+func _build_objective() -> void:
+	var panel := Panel.new()
+	panel.position = Vector2(16, 112)
+	panel.size = Vector2(250, 88)
+	panel.add_theme_stylebox_override("panel", _panel_style(Color(0.05,0.07,0.14,0.62), Color(1.0,0.75,0.2,0.3), 12))
+	ui_root.add_child(panel)
+	_label(panel, "⚠ Objetivo Actual", Vector2(12, 8), Vector2(220, 20), 13, Color(1.0,0.82,0.35))
+	objective_sub = _label(panel, "Elimina 8 monstruos para\navanzar a la siguiente oleada.", Vector2(12, 30), Vector2(226, 34), 11, Color(0.86,0.9,0.98,0.9))
+	objective_text = _label(panel, "0 / 8", Vector2(12, 64), Vector2(100, 20), 18, Color(1.0,0.9,0.45))
+
+func _build_right_forge() -> void:
+	var panel := Panel.new()
+	panel.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
+	panel.position = Vector2(-236, -360)
+	panel.size = Vector2(220, 320)
+	panel.add_theme_stylebox_override("panel", _panel_style(Color(0.05,0.07,0.14,0.68), Color(0.45,0.7,1.0,0.22), 12))
+	ui_root.add_child(panel)
+	_label(panel, "⚒ Forja", Vector2(12, 8), Vector2(120, 24), 18, Color(1.0,0.86,0.4))
+	var upgrades = [
+		["sharpness","Afilar","25"],["swiftness","Ligereza","30"],["criticalMastery","Crítico","35"],
+		["vampirism","Vampiro","40"],["soulMagnet","Almas","30"],["bladeSize","Colosal","45"]
+	]
+	var y := 40
+	for u in upgrades:
+		var btn := Button.new()
+		btn.position = Vector2(10, y)
+		btn.size = Vector2(200, 34)
+		btn.text = "%s  Lv.0  %sg" % [u[1], u[2]]
+		_style_button(btn)
+		var key = u[0]; var base = int(u[2])
+		btn.pressed.connect(func(): _on_upgrade_pressed(key, base))
+		panel.add_child(btn)
+		forge_buttons[key] = btn
+		y += 40
+	var hint := _label(panel, "WASD Click Q E R Shift", Vector2(12, 286), Vector2(196, 20), 10, Color(0.75,0.82,0.95,0.8))
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+func _build_bottom_skills() -> void:
+	var panel := HBoxContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	panel.position = Vector2(-280, -92)
+	panel.size = Vector2(560, 76)
+	panel.alignment = BoxContainer.ALIGNMENT_CENTER
+	panel.add_theme_constant_override("separation", 14)
+	ui_root.add_child(panel)
+	for s in [["Q","Torbellino","whirlwind"],["E","Onda Cortante","swordWave"],["R","Lluvia de Espadas","ultimate"],["Shift","Dash","dash"]]:
+		var box := Panel.new()
+		box.custom_minimum_size = Vector2(110, 72)
+		box.add_theme_stylebox_override("panel", _panel_style(Color(0.08,0.12,0.22,0.72), Color(0.45,0.75,1.0,0.35), 12))
+		panel.add_child(box)
+		var keyl := _label(box, s[0], Vector2(0,4), Vector2(110,20), 20, Color(0.95,0.98,1.0), HORIZONTAL_ALIGNMENT_CENTER)
+		var namel := _label(box, s[1], Vector2(0,28), Vector2(110,18), 11, Color(0.8,0.9,1.0,0.95), HORIZONTAL_ALIGNMENT_CENTER)
+		var cdl := _label(box, "Listo", Vector2(0,48), Vector2(110,18), 12, Color(0.5,1.0,0.6), HORIZONTAL_ALIGNMENT_CENTER)
+		cd_nodes[s[2]] = {"panel": box, "cd": cdl}
+
+func _build_log() -> void:
+	var panel := Panel.new()
+	panel.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	panel.position = Vector2(16, -170)
+	panel.size = Vector2(320, 130)
+	panel.add_theme_stylebox_override("panel", _panel_style(Color(0.04,0.05,0.09,0.45), Color(1,1,1,0.08), 10))
+	ui_root.add_child(panel)
+	log_label = RichTextLabel.new()
+	log_label.position = Vector2(10,10); log_label.size = Vector2(300,110)
+	log_label.bbcode_enabled = false
+	log_label.scroll_active = false
+	log_label.add_theme_font_size_override("normal_font_size", 12)
+	log_label.add_theme_color_override("default_color", Color(0.85,0.9,1.0,0.85))
+	panel.add_child(log_label)
+
+func _build_boss_bar() -> void:
+	boss_panel = Panel.new()
+	boss_panel.visible = false
+	boss_panel.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	boss_panel.position = Vector2(-260, 72)
+	boss_panel.size = Vector2(520, 44)
+	boss_panel.add_theme_stylebox_override("panel", _panel_style(Color(0.12,0.03,0.03,0.72), Color(1,0.35,0.25,0.5), 10))
+	ui_root.add_child(boss_panel)
+	boss_label = _label(boss_panel, "BOSS", Vector2(0,2), Vector2(520,18), 13, Color(1,0.8,0.8), HORIZONTAL_ALIGNMENT_CENTER)
+	boss_bar = ProgressBar.new()
+	boss_bar.position = Vector2(16,24); boss_bar.size = Vector2(488,12)
+	boss_bar.show_percentage = false
+	boss_bar.add_theme_stylebox_override("background", _panel_style(Color(0.15,0.05,0.05,0.9), Color(1,1,1,0.08), 4))
+	boss_bar.add_theme_stylebox_override("fill", _panel_style(Color(0.9,0.15,0.2,0.95), Color(1,0.5,0.5,0.4), 4))
+	boss_panel.add_child(boss_bar)
+
+func _build_game_over() -> void:
+	game_over_panel = Panel.new()
+	game_over_panel.visible = false
+	game_over_panel.set_anchors_preset(Control.PRESET_CENTER)
+	game_over_panel.position = Vector2(-220,-90)
+	game_over_panel.size = Vector2(440,180)
+	game_over_panel.add_theme_stylebox_override("panel", _panel_style(Color(0.03,0.03,0.06,0.88), Color(1.0,0.4,0.3,0.5), 14))
+	ui_root.add_child(game_over_panel)
+	_label(game_over_panel, "HAS CAÍDO", Vector2(0,30), Vector2(440,36), 34, Color(1.0,0.85,0.8), HORIZONTAL_ALIGNMENT_CENTER)
+	_label(game_over_panel, "La Forja Ancestral puede restaurarte", Vector2(0,72), Vector2(440,24), 14, Color(0.85,0.88,0.95,0.9), HORIZONTAL_ALIGNMENT_CENTER)
+	var btn := Button.new()
+	btn.text = "Reaparecer"
+	btn.position = Vector2(150,120); btn.size = Vector2(140,40)
+	_style_button(btn)
+	btn.pressed.connect(_on_respawn_pressed)
+	game_over_panel.add_child(btn)
+
+func _build_pause() -> void:
+	pause_panel = Panel.new()
+	pause_panel.visible = false
+	pause_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	pause_panel.add_theme_stylebox_override("panel", _panel_style(Color(0.02,0.02,0.04,0.72), Color(0,0,0,0), 0, 0))
+	ui_root.add_child(pause_panel)
+	var box := VBoxContainer.new()
+	box.set_anchors_preset(Control.PRESET_CENTER)
+	box.position = Vector2(-140,-120); box.size = Vector2(280,240)
+	box.add_theme_constant_override("separation", 10)
+	pause_panel.add_child(box)
+	var title := _label(box, "PAUSA", Vector2(0,0), Vector2(280,40), 34, Color(1,0.9,0.7), HORIZONTAL_ALIGNMENT_CENTER)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for pair in [["Continuar", _on_resume_pressed], ["Guardar", _on_save_pressed], ["Salir", _on_quit_pressed]]:
+		var b := Button.new(); b.text = pair[0]; b.custom_minimum_size = Vector2(280,42); _style_button(b); b.pressed.connect(pair[1]); box.add_child(b)
+
+func _build_combo() -> void:
+	combo_label = _label(ui_root, "", Vector2(0, -160), Vector2(300, 50), 34, Color(1.0,0.95,0.6), HORIZONTAL_ALIGNMENT_CENTER)
+	combo_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	combo_label.position = Vector2(-150, -170)
+	combo_label.visible = false
 
 func _style_button(b: Button) -> void:
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color(0.12, 0.16, 0.24, 0.72)
-	normal.border_color = Color(0.45, 0.65, 0.95, 0.25)
-	normal.set_border_width_all(1)
-	normal.set_corner_radius_all(6)
-	normal.content_margin_left = 8; normal.content_margin_right = 8
-	normal.content_margin_top = 4; normal.content_margin_bottom = 4
-	var hover := normal.duplicate()
-	hover.bg_color = Color(0.2, 0.28, 0.42, 0.85)
-	hover.border_color = Color(0.6, 0.8, 1.0, 0.45)
-	var pressed := normal.duplicate()
-	pressed.bg_color = Color(0.08, 0.12, 0.18, 0.9)
+	var normal := _panel_style(Color(0.12,0.16,0.24,0.78), Color(0.45,0.65,0.95,0.28), 8)
+	var hover := _panel_style(Color(0.2,0.28,0.42,0.88), Color(0.6,0.8,1.0,0.45), 8)
+	var pressed := _panel_style(Color(0.08,0.12,0.18,0.9), Color(0.4,0.6,0.9,0.4), 8)
 	b.add_theme_stylebox_override("normal", normal)
 	b.add_theme_stylebox_override("hover", hover)
 	b.add_theme_stylebox_override("pressed", pressed)
 	b.add_theme_stylebox_override("focus", hover)
-	b.add_theme_color_override("font_color", Color(0.92, 0.95, 1.0, 0.95))
+	b.add_theme_color_override("font_color", Color(0.92,0.95,1.0,0.95))
 	b.add_theme_font_size_override("font_size", 12)
-
-func _apply_panel_style(p: Panel, bg: Color, border: Color, radius: int) -> void:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = bg
-	sb.border_color = border
-	sb.set_border_width_all(1 if radius > 0 else 0)
-	if radius > 0:
-		sb.set_corner_radius_all(radius)
-	p.add_theme_stylebox_override("panel", sb)
-
-func _style_bar(bar: ProgressBar, bg: Color, fill_a: Color, fill_b: Color) -> void:
-	var bg_sb := StyleBoxFlat.new()
-	bg_sb.bg_color = bg
-	bg_sb.set_corner_radius_all(5)
-	bg_sb.set_border_width_all(1)
-	bg_sb.border_color = Color(1,1,1,0.08)
-	var fill_sb := StyleBoxFlat.new()
-	fill_sb.bg_color = fill_a
-	fill_sb.border_color = fill_b
-	fill_sb.set_border_width_all(1)
-	fill_sb.set_corner_radius_all(5)
-	# subtle gradient via shadow not available; use border highlight
-	bar.add_theme_stylebox_override("background", bg_sb)
-	bar.add_theme_stylebox_override("fill", fill_sb)
-	bar.show_percentage = false
 
 func connect_player(p: Player) -> void:
 	player = p
@@ -136,57 +305,53 @@ func connect_player(p: Player) -> void:
 	player.wave_changed.connect(_on_wave)
 	player.evolution_changed.connect(_on_evo)
 	player.log_added.connect(_on_log)
-	if player.has_signal("player_died"):
-		player.player_died.connect(_on_player_died)
-	if player.has_signal("cooldowns_changed"):
-		player.cooldowns_changed.connect(_on_cooldowns_changed)
+	if player.has_signal("player_died"): player.player_died.connect(_on_player_died)
+	if player.has_signal("cooldowns_changed"): player.cooldowns_changed.connect(func(_c): _update_cooldowns())
 	_on_hp(player.player_hp, player.player_max_hp)
 	_on_xp(player.current_xp, GameData.get_xp_required(player.sword_level), player.sword_level)
 	_on_gold(player.gold)
 	_on_kills(player.kills)
 	_on_wave(player.wave, player.wave_kills)
-	evo_banner.visible = false
 	if boss_panel: boss_panel.visible = false
 	if game_over_panel: game_over_panel.visible = false
+	if pause_panel: pause_panel.visible = false
 
 func _on_hp(cur: int, max_hp: int) -> void:
-	hp_bar.max_value = max_hp
-	hp_bar.value = cur
-	hp_label.text = "%d / %d" % [cur, max_hp]
-	# dynamic color: green->yellow->red
-	var ratio := float(cur) / float(maxi(1, max_hp))
-	var fill: StyleBoxFlat = hp_bar.get_theme_stylebox("fill")
-	if fill:
-		if ratio > 0.5:
-			fill.bg_color = Color(0.18, 0.78, 0.32, 0.95).lerp(Color(0.95, 0.75, 0.2, 0.95), (1.0 - ratio) * 2.0)
-		else:
-			fill.bg_color = Color(0.95, 0.75, 0.2, 0.95).lerp(Color(0.9, 0.18, 0.25, 0.95), (0.5 - ratio) * 2.0)
+	if hp_bar_new:
+		hp_bar_new.max_value = max_hp; hp_bar_new.value = cur
+		var ratio := float(cur) / float(maxi(1,max_hp))
+		var fill: StyleBoxFlat = hp_bar_new.get_theme_stylebox("fill")
+		if fill:
+			fill.bg_color = Color(0.2,0.85,0.35,0.95) if ratio > 0.5 else (Color(0.95,0.75,0.2,0.95) if ratio > 0.25 else Color(0.9,0.18,0.25,0.95))
+	if hp_text: hp_text.text = "%d / %d" % [cur, max_hp]
 
 func _on_xp(cur: int, req: int, level: int) -> void:
-	xp_bar.max_value = req
-	xp_bar.value = cur
-	xp_label.text = "EXP %d/%d" % [cur, req]
-	level_label.text = "Nv.%d" % level
+	if xp_bar_new: xp_bar_new.max_value = req; xp_bar_new.value = cur
+	var pct := int((float(cur) / float(maxi(1,req))) * 100.0)
+	if xp_text: xp_text.text = "%d%%" % pct
+	if lvl_text: lvl_text.text = "Nv. %d" % level
 	var tier = GameData.get_sword_for_level(level)
-	sword_name_label.text = str(tier["name"])
+	if sword_text: sword_text.text = str(tier["name"])
+	_update_forge_buttons()
 
 func _on_gold(g: int) -> void:
-	gold_label.text = "Oro %d" % g
+	if gold_text: gold_text.text = "🪙 %d" % g
+	_update_forge_buttons()
 
-func _on_kills(k: int) -> void:
-	kills_label.text = "K %d" % k
+func _on_kills(_k: int) -> void:
+	pass
 
 func _on_wave(w: int, wk: int) -> void:
-	wave_label.text = "Oleada %d  %d/8" % [w, wk]
+	if wave_text: wave_text.text = "💀 Oleada %d / 8" % w
+	if objective_text: objective_text.text = "%d / 8" % wk
+	if objective_sub: objective_sub.text = "Elimina 8 monstruos para\navanzar a la siguiente oleada."
 
 func _on_evo(tier: Dictionary) -> void:
-	evo_banner.visible = true
-	evo_banner.modulate.a = 1.0
-	evo_banner_label.text = "¡EVOLUCIÓN!  %s" % str(tier["name"])
-	var tw := create_tween()
-	tw.tween_interval(3.2)
-	tw.tween_property(evo_banner, "modulate:a", 0.0, 0.5)
-	tw.tween_callback(func(): evo_banner.visible = false; evo_banner.modulate.a = 1.0)
+	_on_log("¡EVOLUCIÓN! %s" % str(tier["name"]), "evolution")
+	if combo_label:
+		combo_label.text = "¡EVOLUCIÓN!"
+		combo_label.visible = true
+		combo_timer = 2.0
 
 func _on_log(text: String, kind: String) -> void:
 	var prefix := ""
@@ -197,115 +362,37 @@ func _on_log(text: String, kind: String) -> void:
 		"boss": prefix = "[!] "
 		"levelup": prefix = "[UP] "
 	log_lines.push_front(prefix + text)
-	if log_lines.size() > 5:
-		log_lines.resize(5)
-	log_label.text = "\n".join(log_lines)
+	if log_lines.size() > 5: log_lines.resize(5)
+	if log_label: log_label.text = "\n".join(log_lines)
 
-func _on_auto_hunt_pressed() -> void:
-	if player: player.toggle_auto_hunt()
-func _on_mode_pressed() -> void:
-	if player: player.toggle_wielder_mode()
-func _on_level_up_pressed() -> void:
-	if player: player.jump_to_level(player.sword_level + 1)
-func _on_upgrade_sharpness_pressed() -> void:
-	if player: player.buy_upgrade("sharpness", 25)
-func _on_upgrade_swiftness_pressed() -> void:
-	if player: player.buy_upgrade("swiftness", 30)
-func _on_upgrade_crit_pressed() -> void:
-	if player: player.buy_upgrade("criticalMastery", 35)
-func _on_upgrade_vamp_pressed() -> void:
-	if player: player.buy_upgrade("vampirism", 40)
-func _on_upgrade_soul_pressed() -> void:
-	if player: player.buy_upgrade("soulMagnet", 30)
-func _on_upgrade_size_pressed() -> void:
-	if player: player.buy_upgrade("bladeSize", 45)
+func _update_forge_buttons() -> void:
+	if player == null: return
+	var base_costs = {"sharpness":25,"swiftness":30,"criticalMastery":35,"vampirism":40,"soulMagnet":30,"bladeSize":45}
+	var names = {"sharpness":"Afilar","swiftness":"Ligereza","criticalMastery":"Crítico","vampirism":"Vampiro","soulMagnet":"Almas","bladeSize":"Colosal"}
+	for k in forge_buttons.keys():
+		var b: Button = forge_buttons[k]
+		var lvl = int(player.upgrades.get(k, 0))
+		var cost = int(round(base_costs[k] * pow(1.45, lvl)))
+		b.text = "%s  Lv.%d  %dg" % [names[k], lvl, cost]
+		b.disabled = player.gold < cost or lvl >= 10
 
-func _build_extra_ui() -> void:
-	var control := $Control
-	# Boss HP
-	boss_panel = Panel.new()
-	boss_panel.name = "BossPanel"
-	boss_panel.visible = false
-	boss_panel.anchor_left = 0.5; boss_panel.anchor_right = 0.5
-	boss_panel.offset_left = -260; boss_panel.offset_right = 260
-	boss_panel.offset_top = 78; boss_panel.offset_bottom = 118
-	var bsb := StyleBoxFlat.new()
-	bsb.bg_color = Color(0.08,0.02,0.02,0.7)
-	bsb.border_color = Color(1.0,0.3,0.2,0.5)
-	bsb.set_border_width_all(1)
-	bsb.set_corner_radius_all(8)
-	boss_panel.add_theme_stylebox_override("panel", bsb)
-	control.add_child(boss_panel)
+func _on_upgrade_pressed(key: String, base_cost: int) -> void:
+	if player: player.buy_upgrade(key, base_cost)
 
-	boss_label = Label.new()
-	boss_label.text = "BOSS"
-	boss_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	boss_label.offset_left = 0; boss_label.offset_right = 520
-	boss_label.offset_top = 2; boss_label.offset_bottom = 20
-	boss_label.add_theme_font_size_override("font_size", 13)
-	boss_label.add_theme_color_override("font_color", Color(1.0,0.75,0.75,1.0))
-	boss_panel.add_child(boss_label)
-
-	boss_bar = ProgressBar.new()
-	boss_bar.show_percentage = false
-	boss_bar.offset_left = 16; boss_bar.offset_right = 504
-	boss_bar.offset_top = 22; boss_bar.offset_bottom = 34
-	var bg := StyleBoxFlat.new(); bg.bg_color = Color(0.15,0.05,0.05,0.9); bg.set_corner_radius_all(4)
-	var fill := StyleBoxFlat.new(); fill.bg_color = Color(0.9,0.15,0.2,0.95); fill.set_corner_radius_all(4)
-	boss_bar.add_theme_stylebox_override("background", bg)
-	boss_bar.add_theme_stylebox_override("fill", fill)
-	boss_panel.add_child(boss_bar)
-
-	# Game Over
-	game_over_panel = Panel.new()
-	game_over_panel.name = "GameOverPanel"
-	game_over_panel.visible = false
-	game_over_panel.anchor_left = 0.5; game_over_panel.anchor_right = 0.5
-	game_over_panel.anchor_top = 0.5; game_over_panel.anchor_bottom = 0.5
-	game_over_panel.offset_left = -220; game_over_panel.offset_right = 220
-	game_over_panel.offset_top = -80; game_over_panel.offset_bottom = 80
-	var gsb := StyleBoxFlat.new()
-	gsb.bg_color = Color(0.03,0.03,0.06,0.88)
-	gsb.border_color = Color(1.0,0.4,0.3,0.5)
-	gsb.set_border_width_all(1)
-	gsb.set_corner_radius_all(12)
-	game_over_panel.add_theme_stylebox_override("panel", gsb)
-	control.add_child(game_over_panel)
-
-	game_over_label = Label.new()
-	game_over_label.text = "HAS CAÍDO\nLa Forja te restaura..."
-	game_over_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	game_over_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	game_over_label.anchor_right = 1.0; game_over_label.anchor_bottom = 1.0
-	game_over_label.offset_bottom = -40
-	game_over_label.add_theme_font_size_override("font_size", 24)
-	game_over_label.add_theme_color_override("font_color", Color(1.0,0.85,0.8,1.0))
-	game_over_panel.add_child(game_over_label)
-
-	var respawn_btn := Button.new()
-	respawn_btn.text = "Reaparecer"
-	respawn_btn.anchor_left = 0.5; respawn_btn.anchor_right = 0.5
-	respawn_btn.offset_left = -70; respawn_btn.offset_right = 70
-	respawn_btn.offset_top = 110; respawn_btn.offset_bottom = 142
-	_style_button(respawn_btn)
-	respawn_btn.pressed.connect(_on_respawn_pressed)
-	game_over_panel.add_child(respawn_btn)
-
-	_build_pause_ui()
-	_build_cooldown_ui()
-
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	_update_boss_bar()
 	_update_cooldowns()
+	if combo_timer > 0.0:
+		combo_timer -= delta
+		if combo_timer <= 0.0 and combo_label:
+			combo_label.visible = false
 
 func _update_boss_bar() -> void:
-	if boss_panel == null:
-		return
+	if boss_panel == null: return
 	var boss: Node3D = null
 	for e in get_tree().get_nodes_in_group("enemies"):
 		if is_instance_valid(e) and e.get("is_boss") == true and int(e.get("hp")) > 0:
-			boss = e
-			break
+			boss = e; break
 	if boss:
 		boss_panel.visible = true
 		boss_bar.max_value = int(boss.get("max_hp"))
@@ -315,78 +402,33 @@ func _update_boss_bar() -> void:
 	else:
 		boss_panel.visible = false
 
-func _on_player_died() -> void:
-	if game_over_panel:
-		game_over_panel.visible = true
-
-func _on_respawn_pressed() -> void:
-	if player and player.has_method("respawn_player"):
-		player.respawn_player()
-	if game_over_panel:
-		game_over_panel.visible = false
-
-func _build_pause_ui() -> void:
-	var control := $Control
-	pause_panel = Panel.new()
-	pause_panel.name = "PausePanel"
-	pause_panel.visible = false
-	pause_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.02,0.02,0.04,0.72)
-	pause_panel.add_theme_stylebox_override("panel", sb)
-	control.add_child(pause_panel)
-
-	var box := VBoxContainer.new()
-	box.anchor_left = 0.5; box.anchor_right = 0.5
-	box.anchor_top = 0.5; box.anchor_bottom = 0.5
-	box.offset_left = -140; box.offset_right = 140
-	box.offset_top = -120; box.offset_bottom = 120
-	box.add_theme_constant_override("separation", 10)
-	pause_panel.add_child(box)
-
-	var title := Label.new()
-	title.text = "PAUSA"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 32)
-	title.add_theme_color_override("font_color", Color(1,0.9,0.7,1))
-	box.add_child(title)
-
-	var resume := Button.new(); resume.text = "Continuar"; _style_button(resume); resume.pressed.connect(_on_resume_pressed); box.add_child(resume)
-	var saveb := Button.new(); saveb.text = "Guardar"; _style_button(saveb); saveb.pressed.connect(_on_save_pressed); box.add_child(saveb)
-	var quitb := Button.new(); quitb.text = "Salir al escritorio"; _style_button(quitb); quitb.pressed.connect(_on_quit_pressed); box.add_child(quitb)
-
-func _build_cooldown_ui() -> void:
-	var control := $Control
-	var panel := HBoxContainer.new()
-	panel.name = "CooldownPanel"
-	panel.anchor_left = 0.5; panel.anchor_right = 0.5
-	panel.anchor_top = 1.0; panel.anchor_bottom = 1.0
-	panel.offset_left = -180; panel.offset_right = 180
-	panel.offset_top = -44; panel.offset_bottom = -12
-	panel.alignment = BoxContainer.ALIGNMENT_CENTER
-	panel.add_theme_constant_override("separation", 8)
-	control.add_child(panel)
-	for item in [["Q","whirlwind"],["E","swordWave"],["R","ultimate"],["Shift","dash"]]:
-		var lbl := Label.new()
-		lbl.text = "%s: OK" % item[0]
-		lbl.add_theme_font_size_override("font_size", 12)
-		lbl.add_theme_color_override("font_color", Color(0.9,0.95,1.0,0.9))
-		lbl.add_theme_color_override("font_outline_color", Color(0,0,0,0.7))
-		lbl.add_theme_constant_override("outline_size", 2)
-		panel.add_child(lbl)
-		cd_labels[item[1]] = lbl
+func _update_cooldowns() -> void:
+	if player == null: return
+	var cds = player.get("cooldowns")
+	if cds == null: return
+	for id in cd_nodes.keys():
+		var v = float(cds.get(id, 0.0))
+		var node = cd_nodes[id]
+		var lbl: Label = node["cd"]
+		var box: Panel = node["panel"]
+		if v > 0.05:
+			lbl.text = "%.1fs" % v
+			lbl.add_theme_color_override("font_color", Color(1.0,0.6,0.5,0.95))
+			box.modulate = Color(0.7,0.7,0.8,0.9)
+		else:
+			lbl.text = "Listo"
+			lbl.add_theme_color_override("font_color", Color(0.5,1.0,0.6,0.95))
+			box.modulate = Color(1,1,1,1)
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		_toggle_pause()
 
 func _toggle_pause() -> void:
-	if game_over_panel and game_over_panel.visible:
-		return
+	if game_over_panel and game_over_panel.visible: return
 	var paused := not get_tree().paused
 	get_tree().paused = paused
-	if pause_panel:
-		pause_panel.visible = paused
+	if pause_panel: pause_panel.visible = paused
 
 func _on_resume_pressed() -> void:
 	get_tree().paused = false
@@ -402,24 +444,23 @@ func _on_quit_pressed() -> void:
 		get_node("/root/SaveSystem").save_game(player)
 	get_tree().quit()
 
-func _on_cooldowns_changed(_cds: Dictionary) -> void:
-	_update_cooldowns()
+func _on_player_died() -> void:
+	if game_over_panel: game_over_panel.visible = true
 
-func _update_cooldowns() -> void:
-	if player == null:
-		return
-	var cds = player.get("cooldowns")
-	if cds == null:
-		return
-	var map = {"Q":"whirlwind","E":"swordWave","R":"ultimate","Shift":"dash"}
-	for key in map.keys():
-		var id = map[key]
-		if cd_labels.has(id):
-			var v = float(cds.get(id, 0.0))
-			var lbl: Label = cd_labels[id]
-			if v > 0.05:
-				lbl.text = "%s: %.1fs" % [key, v]
-				lbl.add_theme_color_override("font_color", Color(1.0,0.6,0.5,0.95))
-			else:
-				lbl.text = "%s: OK" % key
-				lbl.add_theme_color_override("font_color", Color(0.6,1.0,0.7,0.95))
+func _on_respawn_pressed() -> void:
+	if player and player.has_method("respawn_player"): player.respawn_player()
+	if game_over_panel: game_over_panel.visible = false
+
+# Legacy signal handlers kept for scene connections
+func _on_auto_hunt_pressed() -> void:
+	if player: player.toggle_auto_hunt()
+func _on_mode_pressed() -> void:
+	if player: player.toggle_wielder_mode()
+func _on_level_up_pressed() -> void:
+	if player: player.jump_to_level(player.sword_level + 1)
+func _on_upgrade_sharpness_pressed() -> void: _on_upgrade_pressed("sharpness", 25)
+func _on_upgrade_swiftness_pressed() -> void: _on_upgrade_pressed("swiftness", 30)
+func _on_upgrade_crit_pressed() -> void: _on_upgrade_pressed("criticalMastery", 35)
+func _on_upgrade_vamp_pressed() -> void: _on_upgrade_pressed("vampirism", 40)
+func _on_upgrade_soul_pressed() -> void: _on_upgrade_pressed("soulMagnet", 30)
+func _on_upgrade_size_pressed() -> void: _on_upgrade_pressed("bladeSize", 45)

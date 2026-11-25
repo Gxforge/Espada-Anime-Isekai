@@ -28,6 +28,9 @@ var boss_state: String = "chase"
 var boss_timer: float = 0.0
 var boss_target: Vector3 = Vector3.ZERO
 var boss_telegraph: MeshInstance3D = null
+# HP bar
+var hp_bar_bg: MeshInstance3D
+var hp_bar_fill: MeshInstance3D
 
 @onready var model_holder: Node3D = $ModelHolder
 
@@ -47,6 +50,7 @@ func setup(monster_def: Dictionary, wave: int, player_ref: Node3D) -> void:
 	var s := float(def.get("scale", 1.0))
 	model_holder.scale = Vector3.ONE * s
 	_load_model()
+	_create_hp_bar()
 	if is_boss:
 		boss_state = "chase"
 		boss_timer = 2.0
@@ -127,13 +131,14 @@ func _physics_process(delta: float) -> void:
 				attack_anim = 0.0
 
 	move_and_slide()
+	_update_hp_bar()
 	var t := Time.get_ticks_msec() / 1000.0
 	if moving:
 		model_holder.position.y = abs(sin(t * 8.0)) * 0.08
 	else:
 		model_holder.position.y = sin(t * 2.5) * 0.04
 
-func take_damage(amount: float, attacker: Node3D, is_heavy: bool = false, knockback: float = 5.5) -> void:
+func take_damage(amount: float, attacker: Node3D, is_heavy: bool = false, knockback: float = 5.5, can_trigger_effects: bool = true) -> void:
 	if hp <= 0:
 		return
 	var final_dmg := amount
@@ -163,7 +168,7 @@ func take_damage(amount: float, attacker: Node3D, is_heavy: bool = false, knockb
 			attacker.hp_changed.emit(attacker.player_hp, attacker.player_max_hp)
 
 	# special effects
-	if is_instance_valid(attacker):
+	if can_trigger_effects and is_instance_valid(attacker):
 		var eff := str(attacker.current_tier.get("special_effect", "none"))
 		if eff == "bleed" and is_crit:
 			bleed_timer = 3.0
@@ -203,7 +208,7 @@ func _chain_lightning(attacker: Node3D, dmg: float, max_targets: int = 3) -> voi
 		hit_ids[best.get_instance_id()] = true
 		_spawn_lightning_arc(current.global_position + Vector3.UP, best.global_position + Vector3.UP)
 		if best.has_method("take_damage"):
-			best.take_damage(dmg, attacker, false, 1.5)
+			best.take_damage(dmg, attacker, false, 1.5, false)
 		current = best
 
 func _spawn_lightning_arc(from: Vector3, to: Vector3) -> void:
@@ -376,3 +381,39 @@ func _clear_telegraph() -> void:
 	if boss_telegraph and is_instance_valid(boss_telegraph):
 		boss_telegraph.queue_free()
 	boss_telegraph = null
+
+func _create_hp_bar() -> void:
+	hp_bar_bg = MeshInstance3D.new()
+	var bg := BoxMesh.new(); bg.size = Vector3(1.2, 0.12, 0.02)
+	hp_bar_bg.mesh = bg
+	var bgm := StandardMaterial3D.new()
+	bgm.albedo_color = Color(0.08,0.08,0.1,0.85)
+	bgm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	bgm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	bgm.no_depth_test = true
+	hp_bar_bg.material_override = bgm
+	hp_bar_bg.position = Vector3(0, 2.5 if is_boss else 2.0, 0)
+	add_child(hp_bar_bg)
+
+	hp_bar_fill = MeshInstance3D.new()
+	var fm := BoxMesh.new(); fm.size = Vector3(1.14, 0.08, 0.03)
+	hp_bar_fill.mesh = fm
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.9,0.15,0.2,0.95) if is_boss else Color(0.2,0.85,0.3,0.95)
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.no_depth_test = true
+	hp_bar_fill.material_override = mat
+	hp_bar_fill.position = Vector3(0, 0, 0.01)
+	hp_bar_bg.add_child(hp_bar_fill)
+
+func _update_hp_bar() -> void:
+	if hp_bar_bg == null or not is_instance_valid(hp_bar_bg): return
+	var ratio := clampf(float(hp) / float(maxi(1,max_hp)), 0.0, 1.0)
+	hp_bar_bg.visible = hp < max_hp or is_boss
+	if not hp_bar_bg.visible: return
+	hp_bar_fill.scale.x = max(0.01, ratio)
+	hp_bar_fill.position.x = -0.57 * (1.0 - ratio)
+	var cam := get_viewport().get_camera_3d()
+	if cam:
+		hp_bar_bg.look_at(cam.global_position, Vector3.UP, true)
