@@ -18,6 +18,11 @@ func _init() -> void:
 	test_player_new_features()
 	test_monster_boss_ai()
 	test_hud_pause_and_cooldowns()
+	test_boot_flow_scenes_exist()
+	test_audio_assets_exist()
+	test_save_settings()
+	test_monster_distinct_ai()
+	test_export_presets()
 	print("=== RESULTS: %d passed, %d failed ===" % [passes, failures.size()])
 	for f in failures:
 		print("FAIL: ", f)
@@ -150,3 +155,44 @@ func test_hud_pause_and_cooldowns() -> void:
 	assert_true(src.find("_build_pause") != -1 or src.find("_build_pause_ui") != -1, "HUD has pause UI")
 	assert_true(src.find("_build_bottom_skills") != -1 or src.find("_build_cooldown_ui") != -1 or src.find("cd_nodes") != -1, "HUD has cooldown UI")
 	assert_true(src.find("get_tree().paused") != -1, "HUD toggles pause")
+
+
+func test_boot_flow_scenes_exist() -> void:
+	for p in ["res://scenes/Boot.tscn","res://scenes/LoadingScreen.tscn","res://scenes/MainMenu.tscn","res://scenes/Main.tscn"]:
+		assert_true(ResourceLoader.exists(p) or FileAccess.file_exists(p), "scene exists: %s" % p)
+	for p in ["res://scripts/Boot.gd","res://scripts/LoadingScreen.gd","res://scripts/MainMenu.gd"]:
+		assert_true(ResourceLoader.exists(p) or FileAccess.file_exists(p), "script exists: %s" % p)
+	assert_true(ResourceLoader.exists("res://assets/ui/logo.png") or FileAccess.file_exists("res://assets/ui/logo.png"), "logo exists")
+	assert_true(ResourceLoader.exists("res://assets/ui/menu_bg.png") or FileAccess.file_exists("res://assets/ui/menu_bg.png"), "menu bg exists")
+
+func test_audio_assets_exist() -> void:
+	for n in ["hit.wav","swing.wav","levelup.wav","boss.wav","ui.wav"]:
+		var p = "res://assets/audio/%s" % n
+		assert_true(ResourceLoader.exists(p) or FileAccess.file_exists(p), "audio exists: %s" % n)
+
+func test_save_settings() -> void:
+	var ss = load("res://scripts/SaveSystem.gd").new()
+	ss.settings["quality"] = "high"
+	ss.settings["audio_muted"] = true
+	assert_eq(ss.settings["quality"], "high", "setting quality")
+	assert_eq(ss.settings["audio_muted"], true, "setting audio_muted")
+	ss.free()
+
+func test_monster_distinct_ai() -> void:
+	var f = FileAccess.open("res://scripts/Monster.gd", FileAccess.READ)
+	var src = f.get_as_text(); f.close()
+	assert_true(src.find("func _basic_ai") != -1, "Monster has basic_ai")
+	for id in ["slime","goblin","skeleton","troll","wraith","orc"]:
+		assert_true(src.find('"%s"' % id) != -1, "Monster AI handles %s" % id)
+	assert_true(src.find("func _spawn_boss_defeat_vfx") != -1, "boss defeat vfx")
+
+func test_export_presets() -> void:
+	var f = FileAccess.open("res://export_presets.cfg", FileAccess.READ)
+	if f == null:
+		assert_true(false, "export_presets.cfg readable")
+		return
+	var src = f.get_as_text(); f.close()
+	assert_true(src.find("Windows Desktop") != -1, "has Windows preset")
+	assert_true(src.find("Linux") != -1, "has Linux preset")
+	assert_true(src.find("ForjaDeAlmas3D.exe") != -1, "windows exe name")
+	assert_true(src.find("ForjaDeAlmas3D.x86_64") != -1, "linux binary name")

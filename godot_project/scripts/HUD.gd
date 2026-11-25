@@ -713,13 +713,29 @@ func _apply_quality(q: String) -> void:
 		"high":
 			vp.msaa_3d = Viewport.MSAA_4X
 			ProjectSettings.set_setting("rendering/lights_and_shadows/directional_shadow/size", 4096)
+	var ss = get_node_or_null("/root/SaveSystem")
+	if ss:
+		ss.settings["quality"] = q
+		ss.save_settings()
 	_on_log("Calidad aplicada: %s" % q, "upgrade")
 
 var _audio_muted := false
 func _toggle_audio() -> void:
 	_audio_muted = not _audio_muted
 	AudioServer.set_bus_mute(0, _audio_muted)
+	var ss = get_node_or_null("/root/SaveSystem")
+	if ss:
+		ss.settings["audio_muted"] = _audio_muted
+		ss.save_settings()
 	_on_log("Audio: %s" % ("OFF" if _audio_muted else "ON"), "upgrade")
+
+func _load_settings() -> void:
+	var ss = get_node_or_null("/root/SaveSystem")
+	if ss:
+		ss.load_settings_only()
+		_audio_muted = bool(ss.settings.get("audio_muted", false))
+		AudioServer.set_bus_mute(0, _audio_muted)
+		_apply_quality(str(ss.settings.get("quality","medium")))
 
 func _build_inventory_panel() -> void:
 	inventory_panel = _build_overlay_panel("Inventario", Vector2(560, 420))
