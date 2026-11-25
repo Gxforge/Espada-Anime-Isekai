@@ -9,6 +9,7 @@ signal wave_changed(wave: int, wave_kills: int)
 signal evolution_changed(tier: Dictionary)
 signal log_added(text: String, kind: String)
 signal cooldowns_changed(cds: Dictionary)
+signal player_died()
 
 @export var move_speed: float = 8.2
 @export var arena_radius: float = 25.5
@@ -43,6 +44,8 @@ var wielder_mode: String = "living_sword" # or knight_wielder
 var crystal_shard_timer: float = 0.0
 var gold_regen_timer: float = 0.0
 var celestial_nova_timer: float = 0.0
+var is_dead: bool = false
+var invuln_timer: float = 0.0
 
 var current_tier: Dictionary
 var stats: Dictionary
@@ -60,6 +63,12 @@ func _ready() -> void:
 	_emit_all()
 
 func _physics_process(delta: float) -> void:
+	if invuln_timer > 0.0:
+		invuln_timer = max(0.0, invuln_timer - delta)
+	if is_dead:
+		velocity = Vector3.ZERO
+		move_and_slide()
+		return
 	_tick_cooldowns(delta)
 	_handle_movement(delta)
 	_handle_combat(delta)
@@ -295,14 +304,26 @@ func _spawn_ultimate_swords() -> void:
 		node.setup(target, float(stats["damage"]) * 2.5, self, float(i) * 0.08)
 
 func take_player_damage(amount: int) -> void:
-	if dash_timer > 0.0:
+	if dash_timer > 0.0 or is_dead or invuln_timer > 0.0:
 		return
 	player_hp -= amount
 	if player_hp <= 0:
-		player_hp = player_max_hp
-		global_position = Vector3.ZERO
-		log_added.emit("¡La Forja Ancestral ha restaurado tu energía vital!", "upgrade")
+		player_hp = 0
+		is_dead = true
+		hp_changed.emit(player_hp, player_max_hp)
+		log_added.emit("Has caído en batalla...", "boss")
+		player_died.emit()
+		return
 	hp_changed.emit(player_hp, player_max_hp)
+
+func respawn_player() -> void:
+	is_dead = false
+	player_hp = player_max_hp
+	global_position = Vector3.ZERO
+	velocity = Vector3.ZERO
+	invuln_timer = 2.0
+	hp_changed.emit(player_hp, player_max_hp)
+	log_added.emit("¡La Forja Ancestral te restaura!", "upgrade")
 
 func gain_experience(amount: int) -> void:
 	current_xp += amount

@@ -44,7 +44,7 @@ See `docs/MODEL_INTEGRATION.md`. All 16 OBJ resources load; runtime wiring uses 
 
 ## 7. Combat/progression testing
 
-- Local automated: `tests/run_tests.gd` — **60 passed, 0 failed** (data, model existence/load, XP, skill ID, save version, builders).
+- Local automated: `tests/run_tests.gd` — **67 passed, 0 failed** (data, model existence/load, XP, skill ID, save version, builders).
 - Not fully tested: full combat feel, all 8 special effects balance, boss encounter, duplicate reward edge cases in live gameplay.
 
 ## 8. Performance measurements
@@ -91,12 +91,12 @@ See `docs/KNOWN_ISSUES.md`.
 | All combat skills work | PARTIAL | Q/E/R/Shift implemented; canonical IDs fixed; needs playtest. |
 | 8 sword identities have implemented gameplay effects | PARTIAL | Initial implementation added; needs tuning/validation. |
 | Monster AI works | PARTIAL | Chase/attack/cooldowns work; distinct behaviors limited. |
-| Malakor boss encounter works | PARTIAL | Spawns as boss; no full encounter design. |
+| Malakor boss encounter works | PARTIAL | Boss HP bar + telegraph/slam/charge/recover added; still needs full defeat sequence/balance. |
 | XP, gold, wave progression work | PARTIAL | Implemented; automated regression limited. |
 | Save and load work | PARTIAL | SaveSystem implemented; needs in-game QA. |
-| Death and respawn work | PARTIAL | Basic respawn exists; no game-over flow. |
+| Death and respawn work | PARTIAL | Game-over overlay + respawn + invuln added; needs polish. |
 | HUD works at supported resolutions | NOT TESTED | Layout uses canvas_items/anchors; no multi-resolution QA run. |
-| Automated tests pass | PASS | 60/60 local headless checks pass. |
+| Automated tests pass | PASS | 67/67 local headless checks pass. |
 | GitHub Actions passes without ignored failures | NOT TESTED | Workflow rewritten strict; not executed on GitHub this session. |
 | Windows export generated and verified | NOT TESTED | Preset added; export not run. |
 | Linux export generated and verified | NOT TESTED | Preset present; export not run. |

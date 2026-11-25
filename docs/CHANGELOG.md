@@ -24,3 +24,10 @@
 - No pause/inventory/game-over/audio/quality settings screens/systems.
 - Full sword effect parity and balance need gameplay validation.
 - CI strict export depends on GitHub runner image having Godot 4.4 templates.
+
+### Continuation pass
+- **Boss Malakor**: added boss AI state machine in `Monster.gd` (chase/telegraph slam/slam/telegraph charge/charge/recover), telegraph VFX, AoE slam damage.
+- **HUD boss HP**: runtime boss HP panel/bar in `HUD.gd`.
+- **Death/Game Over**: `player_died` signal, `is_dead`/`invuln_timer`, respawn flow and game-over overlay in HUD.
+- **Save on exit**: `Main.gd` saves on `NOTIFICATION_WM_CLOSE_REQUEST`.
+- **Tests**: expanded to 67 passing checks (player death/respawn, boss AI markers).

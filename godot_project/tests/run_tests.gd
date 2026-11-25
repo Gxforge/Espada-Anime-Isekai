@@ -15,6 +15,8 @@ func _init() -> void:
 	test_upgrade_max_level()
 	test_monster_builder()
 	test_sword_builder()
+	test_player_new_features()
+	test_monster_boss_ai()
 	print("=== RESULTS: %d passed, %d failed ===" % [passes, failures.size()])
 	for f in failures:
 		print("FAIL: ", f)
@@ -124,3 +126,19 @@ func test_sword_builder() -> void:
 	var node = SB.build_sword("wood", 1)
 	assert_true(node != null, "SwordBuilder builds wood sword")
 	node.free()
+
+
+func test_player_new_features() -> void:
+	var f = FileAccess.open("res://scripts/Player.gd", FileAccess.READ)
+	var src = f.get_as_text(); f.close()
+	assert_true(src.find("signal player_died") != -1, "Player has player_died signal")
+	assert_true(src.find("func respawn_player") != -1, "Player has respawn_player")
+	assert_true(src.find("is_dead") != -1, "Player has is_dead")
+	assert_true(src.find("_canonical_skill") != -1, "Player has canonical skill")
+
+func test_monster_boss_ai() -> void:
+	var f = FileAccess.open("res://scripts/Monster.gd", FileAccess.READ)
+	var src = f.get_as_text(); f.close()
+	assert_true(src.find("func _boss_ai") != -1, "Monster has boss AI")
+	assert_true(src.find("telegraph_slam") != -1, "Boss has slam telegraph")
+	assert_true(src.find("telegraph_charge") != -1, "Boss has charge telegraph")

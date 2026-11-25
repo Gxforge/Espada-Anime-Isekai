@@ -94,5 +94,10 @@ func _wire_hud() -> void:
 
 func _on_wave_changed(wave: int, _wk: int) -> void:
 	if wave % 3 == 0:
-		# spawn boss
 		_spawn_monster(true)
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		if has_node("/root/SaveSystem") and is_instance_valid(player):
+			get_node("/root/SaveSystem").save_game(player)
+		get_tree().quit()

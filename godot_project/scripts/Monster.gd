@@ -23,6 +23,11 @@ var burn_timer: float = 0.0
 var burn_dps: float = 0.0
 
 var player: Node3D = null
+# Boss AI
+var boss_state: String = "chase"
+var boss_timer: float = 0.0
+var boss_target: Vector3 = Vector3.ZERO
+var boss_telegraph: MeshInstance3D = null
 
 @onready var model_holder: Node3D = $ModelHolder
 
@@ -42,6 +47,9 @@ func setup(monster_def: Dictionary, wave: int, player_ref: Node3D) -> void:
 	var s := float(def.get("scale", 1.0))
 	model_holder.scale = Vector3.ONE * s
 	_load_model()
+	if is_boss:
+		boss_state = "chase"
+		boss_timer = 2.0
 
 func _load_model() -> void:
 	for c in model_holder.get_children():
@@ -95,28 +103,30 @@ func _physics_process(delta: float) -> void:
 		rotation.y = lerp_angle(rotation.y, target_rot, delta * 6.0)
 
 	var moving := false
-	if dist > attack_range:
-		var dir := to_player.normalized()
-		velocity = dir * speed
-		moving = true
-		attack_anim = 0.0
+	if is_boss:
+		moving = _boss_ai(delta, dist)
 	else:
-		velocity = Vector3.ZERO
-		attack_cd -= delta
-		if attack_cd <= 0.0:
-			attack_cd = attack_cooldown_def
-			attack_anim = 0.01
-
-	if attack_anim > 0.0:
-		attack_anim += delta * 2.6
-		if attack_anim >= 0.5 and (attack_anim - delta * 2.6) < 0.5:
-			if dist <= attack_range + 0.7 and is_instance_valid(player) and player.has_method("take_player_damage"):
-				player.take_player_damage(damage)
-		if attack_anim >= 1.0:
+		if dist > attack_range:
+			var dir := to_player.normalized()
+			velocity = dir * speed
+			moving = true
 			attack_anim = 0.0
+		else:
+			velocity = Vector3.ZERO
+			attack_cd -= delta
+			if attack_cd <= 0.0:
+				attack_cd = attack_cooldown_def
+				attack_anim = 0.01
+
+		if attack_anim > 0.0:
+			attack_anim += delta * 2.6
+			if attack_anim >= 0.5 and (attack_anim - delta * 2.6) < 0.5:
+				if dist <= attack_range + 0.7 and is_instance_valid(player) and player.has_method("take_player_damage"):
+					player.take_player_damage(damage)
+			if attack_anim >= 1.0:
+				attack_anim = 0.0
 
 	move_and_slide()
-	# simple idle/move bob
 	var t := Time.get_ticks_msec() / 1000.0
 	if moving:
 		model_holder.position.y = abs(sin(t * 8.0)) * 0.08
@@ -220,6 +230,7 @@ func _spawn_lightning_arc(from: Vector3, to: Vector3) -> void:
 func _die(attacker: Node3D) -> void:
 	if not is_inside_tree():
 		return
+	_clear_telegraph()
 	if is_instance_valid(attacker) and attacker.has_method("gain_experience"):
 		var xp_mult := float(attacker.stats.get("xp_mult", 1.0))
 		var xp_gain := int(round(xp_reward * xp_mult))
@@ -257,3 +268,111 @@ func _set_flash(active: bool) -> void:
 			var mat: StandardMaterial3D = c.material_override
 			if mat:
 				mat.emission_energy_multiplier = 2.5 if active else 0.35
+
+func _boss_ai(delta: float, dist: float) -> bool:
+	boss_timer -= delta
+	match boss_state:
+		"chase":
+			if dist > attack_range:
+				velocity = (player.global_position - global_position).normalized() * speed
+				velocity.y = 0
+			else:
+				velocity = Vector3.ZERO
+			if boss_timer <= 0.0:
+				if dist < 6.0 and randf() < 0.5:
+					_start_boss_slam()
+				else:
+					_start_boss_charge()
+			return velocity.length() > 0.1
+		"telegraph_slam":
+			velocity = Vector3.ZERO
+			_update_telegraph_pulse()
+			if boss_timer <= 0.0:
+				_do_boss_slam()
+			return false
+		"telegraph_charge":
+			velocity = Vector3.ZERO
+			_update_telegraph_pulse()
+			if boss_timer <= 0.0:
+				boss_state = "charge"
+				boss_timer = 0.45
+				var dir = (boss_target - global_position); dir.y = 0
+				if dir.length() < 0.1: dir = Vector3.FORWARD
+				boss_target = dir.normalized()
+				_clear_telegraph()
+			return false
+		"charge":
+			velocity = boss_target * speed * 3.0
+			if boss_timer <= 0.0:
+				boss_state = "recover"
+				boss_timer = 1.2
+				velocity = Vector3.ZERO
+			else:
+				if dist < 2.5 and is_instance_valid(player) and player.has_method("take_player_damage"):
+					player.take_player_damage(int(float(damage) * 1.2))
+					boss_state = "recover"
+					boss_timer = 1.2
+					velocity = Vector3.ZERO
+			return velocity.length() > 0.1
+		"recover":
+			velocity = Vector3.ZERO
+			if boss_timer <= 0.0:
+				boss_state = "chase"
+				boss_timer = randf_range(1.8, 3.2)
+			return false
+	return false
+
+func _start_boss_slam() -> void:
+	boss_state = "telegraph_slam"
+	boss_timer = 0.9
+	_spawn_telegraph(global_position, 4.2, Color(1.0, 0.2, 0.1, 0.35))
+
+func _start_boss_charge() -> void:
+	boss_state = "telegraph_charge"
+	boss_timer = 0.7
+	boss_target = player.global_position if is_instance_valid(player) else global_position + Vector3.FORWARD
+	_spawn_telegraph(global_position + (boss_target - global_position).normalized() * 2.0, 2.0, Color(1.0, 0.6, 0.1, 0.3))
+
+func _do_boss_slam() -> void:
+	_clear_telegraph()
+	boss_state = "recover"
+	boss_timer = 1.4
+	# AoE damage
+	var ring := MeshInstance3D.new()
+	var torus := TorusMesh.new(); torus.inner_radius = 0.5; torus.outer_radius = 0.9
+	ring.mesh = torus
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(1.0,0.2,0.1,0.8); mat.emission_enabled=true; mat.emission=Color(1,0.2,0.1); mat.emission_energy_multiplier=4.0
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	ring.material_override = mat
+	get_tree().current_scene.add_child(ring)
+	ring.global_position = Vector3(global_position.x, 0.1, global_position.z)
+	var tw := get_tree().current_scene.create_tween()
+	tw.tween_property(ring, "scale", Vector3(4.5,1,4.5), 0.35)
+	tw.parallel().tween_property(mat, "albedo_color:a", 0.0, 0.35)
+	tw.tween_callback(ring.queue_free)
+	if is_instance_valid(player) and global_position.distance_to(player.global_position) <= 4.5:
+		if player.has_method("take_player_damage"):
+			player.take_player_damage(int(float(damage) * 1.4))
+
+func _spawn_telegraph(pos: Vector3, radius: float, color: Color) -> void:
+	_clear_telegraph()
+	boss_telegraph = MeshInstance3D.new()
+	var cyl := CylinderMesh.new(); cyl.top_radius = radius; cyl.bottom_radius = radius; cyl.height = 0.06
+	boss_telegraph.mesh = cyl
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color; mat.emission_enabled=true; mat.emission=Color(color.r,color.g,color.b); mat.emission_energy_multiplier=2.0
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	boss_telegraph.material_override = mat
+	get_tree().current_scene.add_child(boss_telegraph)
+	boss_telegraph.global_position = Vector3(pos.x, 0.08, pos.z)
+
+func _update_telegraph_pulse() -> void:
+	if boss_telegraph and is_instance_valid(boss_telegraph):
+		var s := 1.0 + sin(Time.get_ticks_msec() / 80.0) * 0.05
+		boss_telegraph.scale = Vector3(s,1,s)
+
+func _clear_telegraph() -> void:
+	if boss_telegraph and is_instance_valid(boss_telegraph):
+		boss_telegraph.queue_free()
+	boss_telegraph = null
