@@ -112,11 +112,13 @@ func _physics_process(delta: float) -> void:
 	else:
 		if dist > attack_range:
 			var dir := to_player.normalized()
-			velocity = dir * speed
+			velocity.x = dir.x * speed
+			velocity.z = dir.z * speed
 			moving = true
 			attack_anim = 0.0
 		else:
-			velocity = Vector3.ZERO
+			velocity.x = move_toward(velocity.x, 0.0, speed * 6.0 * delta)
+			velocity.z = move_toward(velocity.z, 0.0, speed * 6.0 * delta)
 			attack_cd -= delta
 			if attack_cd <= 0.0:
 				attack_cd = attack_cooldown_def
@@ -130,13 +132,34 @@ func _physics_process(delta: float) -> void:
 			if attack_anim >= 1.0:
 				attack_anim = 0.0
 
+	# gravity / physics
+	if not is_on_floor():
+		velocity.y -= 24.0 * delta
+	else:
+		velocity.y = maxf(velocity.y, -1.0)
+
 	move_and_slide()
 	_update_hp_bar()
+
+	# procedural animation
 	var t := Time.get_ticks_msec() / 1000.0
+	var bob := 0.0
+	var sway := 0.0
+	var lunge := 0.0
 	if moving:
-		model_holder.position.y = abs(sin(t * 8.0)) * 0.08
+		bob = abs(sin(t * 10.0)) * 0.12
+		sway = sin(t * 10.0) * 0.08
+		model_holder.rotation.z = lerp(model_holder.rotation.z, sway, delta * 8.0)
+		model_holder.rotation.x = lerp(model_holder.rotation.x, 0.08, delta * 8.0)
 	else:
-		model_holder.position.y = sin(t * 2.5) * 0.04
+		bob = sin(t * 2.5) * 0.04
+		model_holder.rotation.z = lerp(model_holder.rotation.z, 0.0, delta * 6.0)
+		model_holder.rotation.x = lerp(model_holder.rotation.x, 0.0, delta * 6.0)
+	if attack_anim > 0.0:
+		lunge = sin(attack_anim * PI) * 0.45
+		model_holder.rotation.x = lerp(model_holder.rotation.x, -0.35 * sin(attack_anim * PI), delta * 12.0)
+	model_holder.position.y = bob
+	model_holder.position.z = -lunge
 
 func take_damage(amount: float, attacker: Node3D, is_heavy: bool = false, knockback: float = 5.5, can_trigger_effects: bool = true) -> void:
 	if hp <= 0:
