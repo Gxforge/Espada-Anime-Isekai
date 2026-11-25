@@ -39,6 +39,9 @@ var forge_buttons: Dictionary = {}
 var combo_label: Label
 var combo_timer: float = 0.0
 var combo_count: int = 0
+var minimap_panel: Control
+var minimap_dots: Array = []
+var branding_label: Label
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -67,6 +70,8 @@ func _build_ui() -> void:
 	_build_game_over()
 	_build_pause()
 	_build_combo()
+	_build_minimap()
+	_build_branding()
 
 func _panel_style(bg: Color, border: Color, radius: int = 10, border_w: int = 1) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
@@ -145,8 +150,11 @@ func _build_top_center() -> void:
 func _build_top_right() -> void:
 	var panel := HBoxContainer.new()
 	panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	panel.position = Vector2(-330, 12)
-	panel.size = Vector2(314, 40)
+	panel.offset_left = -340.0
+	panel.offset_right = -16.0
+	panel.offset_top = 14.0
+	panel.offset_bottom = 54.0
+	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	panel.add_theme_constant_override("separation", 8)
 	ui_root.add_child(panel)
 	for txt in ["Ajustes", "Pausa", "Inv", "Stats"]:
@@ -172,9 +180,13 @@ func _build_objective() -> void:
 
 func _build_right_forge() -> void:
 	var panel := Panel.new()
-	panel.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
-	panel.position = Vector2(-236, -360)
-	panel.size = Vector2(220, 320)
+	panel.set_anchors_preset(Control.PRESET_CENTER_RIGHT)
+	panel.offset_left = -236.0
+	panel.offset_right = -16.0
+	panel.offset_top = -200.0
+	panel.offset_bottom = 140.0
+	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
 	panel.add_theme_stylebox_override("panel", _panel_style(Color(0.05,0.07,0.14,0.68), Color(0.45,0.7,1.0,0.22), 12))
 	ui_root.add_child(panel)
 	_label(panel, "⚒ Forja", Vector2(12, 8), Vector2(120, 24), 18, Color(1.0,0.86,0.4))
@@ -200,8 +212,11 @@ func _build_right_forge() -> void:
 func _build_bottom_skills() -> void:
 	var panel := HBoxContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	panel.position = Vector2(-280, -92)
-	panel.size = Vector2(560, 76)
+	panel.offset_left = -290.0
+	panel.offset_right = 290.0
+	panel.offset_top = -104.0
+	panel.offset_bottom = -18.0
+	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	panel.alignment = BoxContainer.ALIGNMENT_CENTER
 	panel.add_theme_constant_override("separation", 14)
 	ui_root.add_child(panel)
@@ -218,8 +233,10 @@ func _build_bottom_skills() -> void:
 func _build_log() -> void:
 	var panel := Panel.new()
 	panel.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	panel.position = Vector2(16, -170)
-	panel.size = Vector2(320, 130)
+	panel.offset_left = 16.0
+	panel.offset_right = 336.0
+	panel.offset_top = -220.0
+	panel.offset_bottom = -90.0
 	panel.add_theme_stylebox_override("panel", _panel_style(Color(0.04,0.05,0.09,0.45), Color(1,1,1,0.08), 10))
 	ui_root.add_child(panel)
 	log_label = RichTextLabel.new()
@@ -234,8 +251,11 @@ func _build_boss_bar() -> void:
 	boss_panel = Panel.new()
 	boss_panel.visible = false
 	boss_panel.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	boss_panel.position = Vector2(-260, 72)
-	boss_panel.size = Vector2(520, 44)
+	boss_panel.offset_left = -260.0
+	boss_panel.offset_right = 260.0
+	boss_panel.offset_top = 76.0
+	boss_panel.offset_bottom = 122.0
+	boss_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	boss_panel.add_theme_stylebox_override("panel", _panel_style(Color(0.12,0.03,0.03,0.72), Color(1,0.35,0.25,0.5), 10))
 	ui_root.add_child(boss_panel)
 	boss_label = _label(boss_panel, "BOSS", Vector2(0,2), Vector2(520,18), 13, Color(1,0.8,0.8), HORIZONTAL_ALIGNMENT_CENTER)
@@ -280,10 +300,20 @@ func _build_pause() -> void:
 		var b := Button.new(); b.text = pair[0]; b.custom_minimum_size = Vector2(280,42); _style_button(b); b.pressed.connect(pair[1]); box.add_child(b)
 
 func _build_combo() -> void:
-	combo_label = _label(ui_root, "", Vector2(0, -160), Vector2(300, 50), 34, Color(1.0,0.95,0.6), HORIZONTAL_ALIGNMENT_CENTER)
-	combo_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	combo_label.position = Vector2(-150, -170)
+	combo_label = Label.new()
+	combo_label.name = "ComboLabel"
+	combo_label.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
+	combo_label.offset_left = -420.0
+	combo_label.offset_right = -30.0
+	combo_label.offset_top = 430.0
+	combo_label.offset_bottom = 500.0
+	combo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	combo_label.add_theme_font_size_override("font_size", 52)
+	combo_label.add_theme_color_override("font_color", Color(1.0, 0.45, 0.15, 0.95))
+	combo_label.add_theme_color_override("font_outline_color", Color(0.1,0.02,0.0,0.9))
+	combo_label.add_theme_constant_override("outline_size", 8)
 	combo_label.visible = false
+	add_child(combo_label)
 
 func _style_button(b: Button) -> void:
 	var normal := _panel_style(Color(0.12,0.16,0.24,0.78), Color(0.45,0.65,0.95,0.28), 8)
@@ -339,7 +369,11 @@ func _on_gold(g: int) -> void:
 	_update_forge_buttons()
 
 func _on_kills(_k: int) -> void:
-	pass
+	combo_count += 1
+	combo_timer = 2.5
+	if combo_label:
+		combo_label.text = "%d Combo!" % combo_count
+		combo_label.visible = true
 
 func _on_wave(w: int, wk: int) -> void:
 	if wave_text: wave_text.text = "💀 Oleada %d / 8" % w
@@ -350,8 +384,9 @@ func _on_evo(tier: Dictionary) -> void:
 	_on_log("¡EVOLUCIÓN! %s" % str(tier["name"]), "evolution")
 	if combo_label:
 		combo_label.text = "¡EVOLUCIÓN!"
+		combo_label.add_theme_color_override("font_color", Color(1.0,0.9,0.4,0.98))
 		combo_label.visible = true
-		combo_timer = 2.0
+		combo_timer = 2.2
 
 func _on_log(text: String, kind: String) -> void:
 	var prefix := ""
@@ -464,3 +499,76 @@ func _on_upgrade_crit_pressed() -> void: _on_upgrade_pressed("criticalMastery", 
 func _on_upgrade_vamp_pressed() -> void: _on_upgrade_pressed("vampirism", 40)
 func _on_upgrade_soul_pressed() -> void: _on_upgrade_pressed("soulMagnet", 30)
 func _on_upgrade_size_pressed() -> void: _on_upgrade_pressed("bladeSize", 45)
+
+
+func _build_minimap() -> void:
+	minimap_panel = Panel.new()
+	minimap_panel.name = "Minimap"
+	minimap_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	minimap_panel.offset_left = -192.0
+	minimap_panel.offset_right = -22.0
+	minimap_panel.offset_top = 84.0
+	minimap_panel.offset_bottom = 254.0
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.04,0.07,0.16,0.72)
+	st.border_color = Color(0.45,0.62,0.95,0.65)
+	st.set_border_width_all(2)
+	st.set_corner_radius_all(85)
+	minimap_panel.add_theme_stylebox_override("panel", st)
+	add_child(minimap_panel)
+	var n := Label.new()
+	n.text = "N"
+	n.position = Vector2(79, 4)
+	n.add_theme_font_size_override("font_size", 14)
+	n.add_theme_color_override("font_color", Color(0.9,0.95,1.0))
+	minimap_panel.add_child(n)
+	# center player dot
+	var p := ColorRect.new()
+	p.color = Color(0.3,0.8,1.0,1.0)
+	p.position = Vector2(82,82)
+	p.size = Vector2(6,6)
+	minimap_panel.add_child(p)
+	# precreate dots
+	for i in range(12):
+		var d := ColorRect.new()
+		d.color = Color(1.0,0.3,0.3,0.9)
+		d.size = Vector2(5,5)
+		d.visible = false
+		minimap_panel.add_child(d)
+		minimap_dots.append(d)
+
+func _update_minimap() -> void:
+	if minimap_panel == null or not is_instance_valid(minimap_panel): return
+	if player == null or not is_instance_valid(player): return
+	var center := Vector2(85,85)
+	var radius := 70.0
+	var range_world := 28.0
+	var monsters := get_tree().get_nodes_in_group("monsters")
+	var idx := 0
+	for m in monsters:
+		if idx >= minimap_dots.size(): break
+		if not is_instance_valid(m): continue
+		var rel: Vector3 = m.global_position - player.global_position
+		var v := Vector2(rel.x, rel.z) / range_world * radius
+		if v.length() > radius:
+			v = v.normalized() * radius
+		var d: ColorRect = minimap_dots[idx]
+		d.visible = true
+		d.position = center + v - d.size/2
+		d.color = Color(0.85,0.2,0.2,0.95) if not m.is_boss else Color(1.0,0.6,0.1,1.0)
+		idx += 1
+	for i in range(idx, minimap_dots.size()):
+		minimap_dots[i].visible = false
+
+func _build_branding() -> void:
+	branding_label = Label.new()
+	branding_label.name = "Branding"
+	branding_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	branding_label.offset_left = 24.0
+	branding_label.offset_right = 390.0
+	branding_label.offset_top = -86.0
+	branding_label.offset_bottom = -10.0
+	branding_label.text = "STUDIO LEXAIR\nEspada Anime Isekai\nForja de Almas 3D"
+	branding_label.add_theme_font_size_override("font_size", 14)
+	branding_label.add_theme_color_override("font_color", Color(0.8,0.9,1.0,0.85))
+	add_child(branding_label)
