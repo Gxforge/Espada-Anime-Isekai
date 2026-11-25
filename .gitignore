@@ -1,0 +1,16 @@
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Web reference (keep local, do not overwrite)
+extracted/
+
+# Godot build outputs
+godot_project/build/
+godot_project/.godot/
+
+# Python
+__pycache__/
+*.pyc

@@ -19,6 +19,8 @@ var attack_anim: float = 0.0
 var hit_flash: float = 0.0
 var knockback_vel: Vector3 = Vector3.ZERO
 var bleed_timer: float = 0.0
+var burn_timer: float = 0.0
+var burn_dps: float = 0.0
 
 var player: Node3D = null
 
@@ -44,12 +46,20 @@ func setup(monster_def: Dictionary, wave: int, player_ref: Node3D) -> void:
 func _load_model() -> void:
 	for c in model_holder.get_children():
 		c.queue_free()
-	var Builder = load("res://scripts/MonsterBuilder.gd")
-	var built: Node3D = Builder.build_monster(str(def.get("id", "slime")))
-	for child in built.get_children():
-		built.remove_child(child)
-		model_holder.add_child(child)
-	built.queue_free()
+	var built: Node3D = null
+	if ResourceLoader.exists("res://scripts/ModelLoader.gd"):
+		var ML = load("res://scripts/ModelLoader.gd")
+		built = ML.build_monster_visual(def)
+	if built == null:
+		var Builder = load("res://scripts/MonsterBuilder.gd")
+		built = Builder.build_monster(str(def.get("id", "slime")))
+	if built.name == "MonsterOBJ":
+		model_holder.add_child(built)
+	else:
+		for child in built.get_children():
+			built.remove_child(child)
+			model_holder.add_child(child)
+		built.queue_free()
 
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(player):
@@ -60,7 +70,14 @@ func _physics_process(delta: float) -> void:
 			_set_flash(false)
 	if bleed_timer > 0.0:
 		bleed_timer = max(0.0, bleed_timer - delta)
-		hp -= int(max(1, max_hp * 0.04 * delta))
+		hp -= int(max(1.0, float(max_hp) * 0.04 * delta))
+		if hp <= 0:
+			_die(player)
+			return
+	if burn_timer > 0.0:
+		burn_timer = max(0.0, burn_timer - delta)
+		hp -= int(max(1.0, burn_dps * delta))
+		_set_flash(int(Time.get_ticks_msec() / 100) % 2 == 0)
 		if hp <= 0:
 			_die(player)
 			return
@@ -141,23 +158,64 @@ func take_damage(amount: float, attacker: Node3D, is_heavy: bool = false, knockb
 		if eff == "bleed" and is_crit:
 			bleed_timer = 3.0
 		elif eff == "lightning":
-			_chain_lightning(attacker, final_dmg * 0.45)
+			_chain_lightning(attacker, final_dmg * 0.45, 3)
 
 	if hp <= 0:
 		_die(attacker)
 
-func _chain_lightning(attacker: Node3D, dmg: float) -> void:
-	var best: Node3D = null
-	var best_d := 6.5
-	for e in get_tree().get_nodes_in_group("enemies"):
-		if e == self or not is_instance_valid(e):
-			continue
-		var d := global_position.distance_to(e.global_position)
-		if d < best_d and e.hp > 0:
-			best_d = d
-			best = e
-	if best and best.has_method("take_damage"):
-		best.take_damage(dmg, attacker, false, 2.0)
+func apply_burn(dps: float, duration: float) -> void:
+	burn_dps = max(burn_dps, dps)
+	burn_timer = max(burn_timer, duration)
+
+func apply_bleed(duration: float = 3.0) -> void:
+	bleed_timer = max(bleed_timer, duration)
+
+func _chain_lightning(attacker: Node3D, dmg: float, max_targets: int = 3) -> void:
+	var hit_ids: Dictionary = {get_instance_id(): true}
+	var current: Node3D = self
+	for _i in range(max_targets):
+		var best: Node3D = null
+		var best_d := 6.5
+		for e in get_tree().get_nodes_in_group("enemies"):
+			if not is_instance_valid(e) or e == current:
+				continue
+			var id := e.get_instance_id()
+			if hit_ids.has(id):
+				continue
+			if e.hp <= 0:
+				continue
+			var d := current.global_position.distance_to(e.global_position)
+			if d < best_d:
+				best_d = d
+				best = e
+		if best == null:
+			break
+		hit_ids[best.get_instance_id()] = true
+		_spawn_lightning_arc(current.global_position + Vector3.UP, best.global_position + Vector3.UP)
+		if best.has_method("take_damage"):
+			best.take_damage(dmg, attacker, false, 1.5)
+		current = best
+
+func _spawn_lightning_arc(from: Vector3, to: Vector3) -> void:
+	var mesh := ImmediateMesh.new()
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.5, 0.9, 1.0, 0.9)
+	mat.emission_enabled = true
+	mat.emission = Color(0.4, 0.8, 1.0)
+	mat.emission_energy_multiplier = 3.0
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mi.material_override = mat
+	get_tree().current_scene.add_child(mi)
+	mesh.surface_begin(Mesh.PRIMITIVE_LINES, mat)
+	mesh.surface_add_vertex(from)
+	mesh.surface_add_vertex(to)
+	mesh.surface_end()
+	var tw := get_tree().current_scene.create_tween()
+	tw.tween_property(mat, "albedo_color:a", 0.0, 0.2)
+	tw.tween_callback(mi.queue_free)
 
 func _die(attacker: Node3D) -> void:
 	if not is_inside_tree():
@@ -187,8 +245,8 @@ func _spawn_loot_orbs() -> void:
 		mat.emission = mat.albedo_color
 		mat.emission_energy_multiplier = 2.0
 		orb.material_override = mat
-		orb.global_position = global_position + Vector3(randf_range(-0.3,0.3), 0.8, randf_range(-0.3,0.3))
 		root.add_child(orb)
+		orb.global_position = global_position + Vector3(randf_range(-0.3,0.3), 0.8, randf_range(-0.3,0.3))
 		var tw := root.create_tween()
 		tw.tween_property(orb, "global_position:y", 0.2, 0.5).set_trans(Tween.TRANS_BOUNCE)
 		tw.tween_callback(orb.queue_free)

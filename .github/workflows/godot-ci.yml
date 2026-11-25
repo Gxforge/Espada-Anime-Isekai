@@ -2,13 +2,16 @@ name: Godot 4.4 CI - Forja de Almas 3D
 
 on:
   push:
-    branches: [ main, master, godot-migration, "codex/**" ]
+    branches: [ main, master, feature/godot-complete-reconstruction, "codex/**" ]
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  validate-and-export:
-    name: Validate & Export (Godot 4.4)
+  validate-test-export:
+    name: Validate, Test & Export (Godot 4.4)
     runs-on: ubuntu-22.04
     container:
       image: barichello/godot-ci:4.4
@@ -19,57 +22,99 @@ jobs:
         with:
           lfs: true
 
-      - name: Show Godot version
-        run: godot --version || true
+      - name: Verify Godot version
+        run: |
+          set -euo pipefail
+          godot --version
+          godot --version | grep -q "4.4"
 
       - name: Setup export templates
         run: |
+          set -euo pipefail
           mkdir -p ~/.local/share/godot/export_templates/4.4.stable
-          if [ -d /root/.local/share/godot/export_templates ]; then
-            cp -r /root/.local/share/godot/export_templates/* ~/.local/share/godot/export_templates/ || true
+          if [ -d /root/.local/share/godot/export_templates/4.4.stable ]; then
+            cp -r /root/.local/share/godot/export_templates/4.4.stable/* ~/.local/share/godot/export_templates/4.4.stable/
+          elif [ -d /root/.local/share/godot/export_templates ]; then
+            cp -r /root/.local/share/godot/export_templates/* ~/.local/share/godot/export_templates/
           fi
-          ls -la ~/.local/share/godot/export_templates/ || true
+          echo "== export templates =="
+          find ~/.local/share/godot/export_templates -maxdepth 3 -type f | sort | head -40
+          # Verify required templates exist for desktop exports
+          TPL=~/.local/share/godot/export_templates/4.4.stable
+          if [ ! -f "$TPL/linux_release.x86_64" ] && [ ! -f "$TPL/linux_debug.x86_64" ]; then
+            echo "ERROR: Linux export templates not found in $TPL"
+            exit 1
+          fi
+          if [ ! -f "$TPL/windows_release_x86_64.exe" ] && [ ! -f "$TPL/windows_debug_x86_64.exe" ]; then
+            echo "ERROR: Windows export templates not found in $TPL"
+            exit 1
+          fi
 
-      - name: Headless import (validate project)
+      - name: Import project
         working-directory: godot_project
         run: |
-          godot --headless --editor --import --quit-after 60 || true
-          echo "Import step finished"
+          set -euo pipefail
+          # Import assets/scripts; must complete successfully
+          godot --headless --editor --path . --import --quit
+          test -d .godot/imported
+          echo "Import completed"
 
-      - name: Validate scripts parse (headless)
+      - name: Run automated tests
         working-directory: godot_project
         run: |
-          # Run a quick headless check - open and quit
-          timeout 120 godot --headless --path . --quit-after 30 || true
-          echo "Headless validation finished"
+          set -euo pipefail
+          godot --headless --path . -s res://tests/run_tests.gd
+
+      - name: Validate required resources load
+        working-directory: godot_project
+        run: |
+          set -euo pipefail
+          godot --headless --path . -s res://tests/run_tests.gd > /tmp/test_out.txt 2>&1
+          cat /tmp/test_out.txt
+          grep -q "0 failed" /tmp/test_out.txt
 
       - name: Export Linux build
         working-directory: godot_project
         run: |
+          set -euo pipefail
           mkdir -p build/linux
-          godot --headless --verbose --export-release "Linux" build/linux/ForjaDeAlmas3D.x86_64 || \
-          godot --headless --verbose --export-debug "Linux" build/linux/ForjaDeAlmas3D.x86_64 || \
-          echo "Export skipped (templates may be unavailable in this image tag)"
-          ls -la build/linux || true
+          godot --headless --path . --export-release "Linux" build/linux/ForjaDeAlmas3D.x86_64
+          test -f build/linux/ForjaDeAlmas3D.x86_64
+          file build/linux/ForjaDeAlmas3D.x86_64 || true
+          ls -lh build/linux/
 
-      - name: Upload Linux build artifact
-        if: always()
+      - name: Export Windows build
+        working-directory: godot_project
+        run: |
+          set -euo pipefail
+          mkdir -p build/windows
+          godot --headless --path . --export-release "Windows Desktop" build/windows/ForjaDeAlmas3D.exe
+          test -f build/windows/ForjaDeAlmas3D.exe
+          file build/windows/ForjaDeAlmas3D.exe || true
+          ls -lh build/windows/
+
+      - name: Upload Linux artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: forja-de-almas-linux
           path: godot_project/build/linux/
-          if-no-files-found: warn
+          if-no-files-found: error
 
-      - name: Project structure report
+      - name: Upload Windows artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: forja-de-almas-windows
+          path: godot_project/build/windows/
+          if-no-files-found: error
+
+      - name: Test summary
         if: always()
         run: |
-          echo "## Project Structure" >> $GITHUB_STEP_SUMMARY
+          echo "## CI Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 3D Models" >> $GITHUB_STEP_SUMMARY
-          ls godot_project/assets/models/ >> $GITHUB_STEP_SUMMARY || true
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Scripts" >> $GITHUB_STEP_SUMMARY
-          ls godot_project/scripts/ >> $GITHUB_STEP_SUMMARY || true
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Scenes" >> $GITHUB_STEP_SUMMARY
-          ls godot_project/scenes/ >> $GITHUB_STEP_SUMMARY || true
+          echo "- Godot 4.4 strict validation" >> $GITHUB_STEP_SUMMARY
+          echo "- Automated tests: res://tests/run_tests.gd" >> $GITHUB_STEP_SUMMARY
+          echo "- Linux export: ForjaDeAlmas3D.x86_64" >> $GITHUB_STEP_SUMMARY
+          echo "- Windows export: ForjaDeAlmas3D.exe" >> $GITHUB_STEP_SUMMARY

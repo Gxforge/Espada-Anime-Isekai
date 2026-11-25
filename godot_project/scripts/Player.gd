@@ -33,12 +33,16 @@ var cd_max := {"whirlwind": 4.0, "swordWave": 4.5, "ultimate": 10.0, "dash": 1.8
 var attack_cooldown: float = 0.0
 var attack_anim: float = 0.0
 var combo_step: int = 0
+var copper_hit_counter: int = 0
 var whirlwind_timer: float = 0.0
 var whirlwind_tick: float = 0.0
 var dash_timer: float = 0.0
 var dash_dir: Vector3 = Vector3.FORWARD
 var auto_hunt: bool = false
 var wielder_mode: String = "living_sword" # or knight_wielder
+var crystal_shard_timer: float = 0.0
+var gold_regen_timer: float = 0.0
+var celestial_nova_timer: float = 0.0
 
 var current_tier: Dictionary
 var stats: Dictionary
@@ -59,6 +63,7 @@ func _physics_process(delta: float) -> void:
 	_tick_cooldowns(delta)
 	_handle_movement(delta)
 	_handle_combat(delta)
+	_process_sword_effects(delta)
 	_update_sword_anim(delta)
 
 func _tick_cooldowns(delta: float) -> void:
@@ -109,7 +114,7 @@ func _handle_movement(delta: float) -> void:
 				velocity = Vector3.ZERO
 				perform_attack()
 				if cooldowns["whirlwind"] <= 0.0: perform_skill("whirlwind")
-				elif cooldowns["swordWave"] <= 0.0: perform_skill("wave")
+				elif cooldowns["swordWave"] <= 0.0: perform_skill("swordWave")
 		else:
 			velocity = Vector3.ZERO
 	else:
@@ -135,7 +140,7 @@ func _handle_combat(delta: float) -> void:
 	if Input.is_action_just_pressed("skill_whirlwind"):
 		perform_skill("whirlwind")
 	if Input.is_action_just_pressed("skill_wave"):
-		perform_skill("wave")
+		perform_skill("swordWave")
 	if Input.is_action_just_pressed("skill_ultimate"):
 		perform_skill("ultimate")
 	if Input.is_action_just_pressed("skill_dash"):
@@ -175,7 +180,15 @@ func perform_attack() -> void:
 	_show_slash()
 	_apply_melee_damage()
 
+func _canonical_skill(skill: String) -> String:
+	match skill:
+		"wave":
+			return "swordWave"
+		_:
+			return skill
+
 func perform_skill(skill: String) -> void:
+	skill = _canonical_skill(skill)
 	if cooldowns.get(skill, 0.0) > 0.0:
 		return
 	match skill:
@@ -185,7 +198,7 @@ func perform_skill(skill: String) -> void:
 			whirlwind_tick = 0.0
 			_spawn_shockwave(global_position, current_tier["aura_color"], float(stats["range"]) * 1.4)
 			log_added.emit("¡Torbellino desatado!", "skill")
-		"wave":
+		"swordWave":
 			cooldowns["swordWave"] = cd_max["swordWave"]
 			_spawn_wave_projectile()
 			_spawn_shockwave(global_position + Vector3(sin(rotation.y),0,cos(rotation.y))*1.5, current_tier["slash_color"], 3.0)
@@ -199,6 +212,8 @@ func perform_skill(skill: String) -> void:
 			cooldowns["dash"] = cd_max["dash"]
 			dash_timer = 0.22
 			dash_dir = Vector3(sin(rotation.y), 0, cos(rotation.y))
+		_:
+			return
 	cooldowns_changed.emit(cooldowns)
 
 func _apply_melee_damage() -> void:
@@ -206,6 +221,7 @@ func _apply_melee_damage() -> void:
 	var rng := float(stats["range"])
 	var combo_mult := 1.35 if combo_step == 2 else 1.0
 	var forward := Vector3(sin(rotation.y), 0, cos(rotation.y))
+	var any_hit := false
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		if not is_instance_valid(enemy):
 			continue
@@ -216,7 +232,13 @@ func _apply_melee_damage() -> void:
 		if dist <= hit_radius:
 			var dot := forward.dot(to_e.normalized()) if dist > 0.001 else 1.0
 			if combo_step == 2 or dist < 2.2 or dot > -0.35:
-				enemy.take_damage(dmg * combo_mult, self, combo_step == 2)
+				var is_crit: bool = randf() < float(stats.get("crit_chance", 0.1))
+				var final_dmg := dmg * combo_mult
+				enemy.take_damage(final_dmg, self, combo_step == 2)
+				_on_sword_hit(enemy, final_dmg, is_crit)
+				any_hit = true
+	if any_hit:
+		_after_any_hit()
 
 func _deal_aoe_damage(radius: float, dmg: float, knockback: float) -> void:
 	for enemy in get_tree().get_nodes_in_group("enemies"):
@@ -250,7 +272,6 @@ func _spawn_wave_projectile() -> void:
 	proj.setup(Vector3(sin(rotation.y), 0, cos(rotation.y)) * 20.0, float(stats["damage"]) * 1.9, self)
 
 func _spawn_ultimate_swords() -> void:
-	var SwordBuilderScript = load("res://scripts/SwordBuilder.gd")
 	var scene_root := get_tree().current_scene
 	for i in range(7):
 		var angle := (float(i) / 7.0) * TAU
@@ -258,7 +279,11 @@ func _spawn_ultimate_swords() -> void:
 		var target := global_position + Vector3(sin(angle) * dist, 0, cos(angle) * dist)
 		var node := Node3D.new()
 		node.name = "SkySword_%d" % i
-		var sword_visual: Node3D = SwordBuilderScript.build_sword(str(current_tier["id"]), sword_level)
+		var sword_visual: Node3D = null
+		if ResourceLoader.exists("res://scripts/ModelLoader.gd"):
+			sword_visual = load("res://scripts/ModelLoader.gd").build_sword_visual(current_tier, sword_level)
+		if sword_visual == null:
+			sword_visual = load("res://scripts/SwordBuilder.gd").build_sword(str(current_tier["id"]), sword_level)
 		sword_visual.scale = Vector3.ONE * 1.6
 		# Point blade downward
 		sword_visual.rotation.z = PI
@@ -324,6 +349,10 @@ func buy_upgrade(key: String, base_cost: int) -> bool:
 	if not upgrades.has(key):
 		return false
 	var lvl: int = int(upgrades[key])
+	var max_level := 10
+	if lvl >= max_level:
+		log_added.emit("Mejora al máximo: %s" % key, "upgrade")
+		return false
 	var cost := int(round(base_cost * pow(1.45, lvl)))
 	if gold < cost:
 		return false
@@ -380,21 +409,35 @@ func _recalc_stats() -> void:
 func _refresh_sword_visual() -> void:
 	for c in sword_mesh_holder.get_children():
 		c.queue_free()
-	var SwordBuilderScript = load("res://scripts/SwordBuilder.gd")
-	var built: Node3D = SwordBuilderScript.build_sword(str(current_tier["id"]), sword_level)
-	var blade_pivot_node: Node3D = built.get_node_or_null("BladePivot")
 	var scale_mult := 1.0 + int(upgrades["bladeSize"]) * 0.06
 	var base_scale := (0.88 * scale_mult) if wielder_mode == "knight_wielder" else (1.12 * scale_mult)
-	if blade_pivot_node:
-		for child in blade_pivot_node.get_children():
-			blade_pivot_node.remove_child(child)
-			sword_mesh_holder.add_child(child)
-			child.scale = child.scale * base_scale
-	else:
+
+	var built: Node3D = null
+	var used_obj := false
+	if ResourceLoader.exists("res://scripts/ModelLoader.gd"):
+		var ML = load("res://scripts/ModelLoader.gd")
+		built = ML.build_sword_visual(current_tier, sword_level)
+		used_obj = built != null and built.name == "SwordOBJ"
+	if built == null:
+		var SwordBuilderScript = load("res://scripts/SwordBuilder.gd")
+		built = SwordBuilderScript.build_sword(str(current_tier["id"]), sword_level)
+
+	if used_obj:
 		sword_mesh_holder.add_child(built)
 		built.scale = Vector3.ONE * base_scale
-	built.queue_free()
-	# knight visibility
+	else:
+		var blade_pivot_node: Node3D = built.get_node_or_null("BladePivot")
+		if blade_pivot_node:
+			for child in blade_pivot_node.get_children():
+				blade_pivot_node.remove_child(child)
+				sword_mesh_holder.add_child(child)
+				child.scale = child.scale * base_scale
+			built.queue_free()
+		else:
+			sword_mesh_holder.add_child(built)
+			built.scale = Vector3.ONE * base_scale
+
+	_ensure_knight_visual()
 	knight_holder.visible = wielder_mode == "knight_wielder"
 	if wielder_mode == "knight_wielder":
 		sword_pivot.position = Vector3(0.6, 1.2, 0.3)
@@ -402,6 +445,18 @@ func _refresh_sword_visual() -> void:
 		sword_pivot.position = Vector3(0, 1.55, 0)
 	aura_light.light_color = current_tier["aura_color"]
 	slash_ring.visible = false
+
+func _ensure_knight_visual() -> void:
+	if knight_holder.has_node("KnightOBJ"):
+		return
+	if not ResourceLoader.exists("res://scripts/ModelLoader.gd"):
+		return
+	var ML = load("res://scripts/ModelLoader.gd")
+	var knight: Node3D = ML.build_knight_visual()
+	if knight:
+		for c in knight_holder.get_children():
+			c.queue_free()
+		knight_holder.add_child(knight)
 
 func _update_sword_anim(delta: float) -> void:
 	var t := Time.get_ticks_msec() / 1000.0
@@ -480,6 +535,158 @@ func _update_sword_anim(delta: float) -> void:
 			mat.albedo_color.a = max(0.0, mat.albedo_color.a - delta * 4.0)
 			if mat.albedo_color.a <= 0.01:
 				slash_ring.visible = false
+
+func _on_sword_hit(enemy: Node3D, dmg: float, is_crit: bool) -> void:
+	var eff := str(current_tier.get("special_effect", "none"))
+	match eff:
+		"gold":
+			if enemy.has_method("apply_burn"):
+				enemy.apply_burn(max(5.0, dmg * 0.25), 2.5)
+			_spawn_fire_patch(enemy.global_position)
+		"obsidian":
+			_spawn_magma_eruption(enemy.global_position, dmg * 0.45)
+		"celestial":
+			_spawn_dimensional_wave(enemy.global_position, dmg * 0.35)
+			if is_crit:
+				_spawn_cosmic_nova(enemy.global_position, dmg * 0.6)
+		"iron":
+			if is_crit and enemy.has_method("apply_bleed"):
+				enemy.apply_bleed(3.0)
+
+func _after_any_hit() -> void:
+	var eff := str(current_tier.get("special_effect", "none"))
+	if eff == "copper":
+		copper_hit_counter += 1
+		if copper_hit_counter >= 3:
+			copper_hit_counter = 0
+			_spawn_copper_sparks()
+			_deal_aoe_damage(float(stats["range"]) * 1.1, float(stats["damage"]) * 0.35, 3.0)
+	if eff == "crystal":
+		_spawn_crystal_shard()
+
+func _process_sword_effects(delta: float) -> void:
+	var eff := str(current_tier.get("special_effect", "none"))
+	if eff == "gold":
+		gold_regen_timer -= delta
+		if gold_regen_timer <= 0.0:
+			gold_regen_timer = 1.0
+			if player_hp < player_max_hp:
+				player_hp = mini(player_max_hp, player_hp + 3)
+				hp_changed.emit(player_hp, player_max_hp)
+	elif eff == "crystal":
+		crystal_shard_timer -= delta
+		if crystal_shard_timer <= 0.0:
+			crystal_shard_timer = 1.8
+			_spawn_crystal_shard()
+	elif eff == "celestial":
+		celestial_nova_timer -= delta
+		if celestial_nova_timer <= 0.0:
+			celestial_nova_timer = 5.0
+			_spawn_cosmic_nova(global_position + Vector3(sin(rotation.y),0,cos(rotation.y))*2.0, float(stats["damage"]) * 0.5)
+
+func _spawn_copper_sparks() -> void:
+	for i in range(10):
+		var p := MeshInstance3D.new()
+		var s := SphereMesh.new()
+		s.radius = 0.08; s.height = 0.16
+		p.mesh = s
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(1.0, 0.6, 0.2, 0.95)
+		mat.emission_enabled = true
+		mat.emission = Color(1.0, 0.45, 0.1)
+		mat.emission_energy_multiplier = 4.0
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		p.material_override = mat
+		get_tree().current_scene.add_child(p)
+		p.global_position = global_position + Vector3(0, 1.0, 0)
+		var ang := randf() * TAU
+		var dist := randf_range(1.0, float(stats["range"]) * 1.1)
+		var target := p.global_position + Vector3(sin(ang) * dist, randf_range(-0.2, 0.6), cos(ang) * dist)
+		var tw := get_tree().current_scene.create_tween()
+		tw.tween_property(p, "global_position", target, 0.25)
+		tw.parallel().tween_property(mat, "albedo_color:a", 0.0, 0.25)
+		tw.tween_callback(p.queue_free)
+
+func _spawn_fire_patch(pos: Vector3) -> void:
+	var ring := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.8; cyl.bottom_radius = 0.8; cyl.height = 0.05
+	ring.mesh = cyl
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(1.0, 0.45, 0.1, 0.7)
+	mat.emission_enabled = true
+	mat.emission = Color(1.0, 0.3, 0.0)
+	mat.emission_energy_multiplier = 2.5
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	ring.material_override = mat
+	get_tree().current_scene.add_child(ring)
+	ring.global_position = Vector3(pos.x, 0.05, pos.z)
+	var tw := get_tree().current_scene.create_tween()
+	tw.tween_property(ring, "scale", Vector3(1.6, 1.0, 1.6), 0.4)
+	tw.parallel().tween_property(mat, "albedo_color:a", 0.0, 0.6)
+	tw.tween_callback(ring.queue_free)
+
+func _spawn_magma_eruption(pos: Vector3, dmg: float) -> void:
+	_deal_aoe_damage_at(pos, 2.4, dmg, 2.5)
+	for i in range(6):
+		var p := MeshInstance3D.new()
+		var s := SphereMesh.new(); s.radius = 0.12; s.height = 0.24
+		p.mesh = s
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(1.0, 0.25, 0.0, 0.9)
+		mat.emission_enabled = true; mat.emission = Color(1.0, 0.2, 0.0); mat.emission_energy_multiplier = 3.0
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		p.material_override = mat
+		get_tree().current_scene.add_child(p)
+		p.global_position = pos + Vector3(0,0.2,0)
+		var ang := randf() * TAU
+		var tgt := p.global_position + Vector3(sin(ang)*randf_range(0.5,1.8), randf_range(0.8,1.8), cos(ang)*randf_range(0.5,1.8))
+		var tw := get_tree().current_scene.create_tween()
+		tw.tween_property(p, "global_position", tgt, 0.25)
+		tw.tween_property(p, "global_position", Vector3(tgt.x, 0.1, tgt.z), 0.2)
+		tw.parallel().tween_property(mat, "albedo_color:a", 0.0, 0.2)
+		tw.tween_callback(p.queue_free)
+
+func _spawn_dimensional_wave(pos: Vector3, dmg: float) -> void:
+	_spawn_shockwave(pos, Color(0.4, 0.9, 1.0), 3.5)
+	_deal_aoe_damage_at(pos, 3.0, dmg, 2.0)
+
+func _spawn_cosmic_nova(pos: Vector3, dmg: float) -> void:
+	_spawn_shockwave(pos, Color(0.8, 0.5, 1.0), 5.0)
+	_deal_aoe_damage_at(pos, 4.5, dmg, 4.0)
+
+func _spawn_crystal_shard() -> void:
+	var target := _find_nearest_enemy()
+	if target == null:
+		return
+	var shard := MeshInstance3D.new()
+	var box := BoxMesh.new(); box.size = Vector3(0.12, 0.12, 0.5)
+	shard.mesh = box
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.8, 0.5, 1.0, 0.95)
+	mat.emission_enabled = true; mat.emission = Color(0.85, 0.4, 1.0); mat.emission_energy_multiplier = 3.0
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	shard.material_override = mat
+	get_tree().current_scene.add_child(shard)
+	var start := global_position + Vector3(0, 1.8, 0)
+	shard.global_position = start
+	var end := target.global_position + Vector3(0, 1.0, 0)
+	shard.look_at(end, Vector3.UP)
+	var tw := get_tree().current_scene.create_tween()
+	tw.tween_property(shard, "global_position", end, 0.22)
+	tw.tween_callback(func():
+		if is_instance_valid(target) and target.has_method("take_damage"):
+			target.take_damage(float(stats["damage"]) * 0.45, self, false, 1.5)
+		shard.queue_free()
+	)
+
+func _deal_aoe_damage_at(pos: Vector3, radius: float, dmg: float, knockback: float) -> void:
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(enemy):
+			continue
+		var dist := pos.distance_to(enemy.global_position)
+		if dist <= radius:
+			enemy.take_damage(dmg, self, false, knockback)
 
 func _spawn_shockwave(pos: Vector3, color: Color, max_radius: float = 4.0) -> void:
 	var ring := MeshInstance3D.new()

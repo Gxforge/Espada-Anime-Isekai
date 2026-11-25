@@ -12,8 +12,12 @@ extends Node3D
 var spawn_timer: float = 0.0
 var rng := RandomNumberGenerator.new()
 
+var _save_timer: float = 0.0
+
 func _ready() -> void:
 	rng.randomize()
+	if has_node("/root/SaveSystem"):
+		get_node("/root/SaveSystem").load_game(player)
 	# initial monsters
 	for i in range(6):
 		_spawn_monster(false)
@@ -22,6 +26,11 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_update_camera(delta)
 	_handle_spawning(delta)
+	_save_timer += delta
+	if _save_timer >= 15.0:
+		_save_timer = 0.0
+		if has_node("/root/SaveSystem"):
+			get_node("/root/SaveSystem").save_game(player)
 
 func _update_camera(delta: float) -> void:
 	if not is_instance_valid(player):
