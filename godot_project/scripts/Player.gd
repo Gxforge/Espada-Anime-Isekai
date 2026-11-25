@@ -38,6 +38,9 @@ var copper_hit_counter: int = 0
 var whirlwind_timer: float = 0.0
 var whirlwind_tick: float = 0.0
 var dash_timer: float = 0.0
+
+var _sfx_player: AudioStreamPlayer
+var _sfx := {}
 var dash_dir: Vector3 = Vector3.FORWARD
 var auto_hunt: bool = false
 var wielder_mode: String = "living_sword" # or knight_wielder
@@ -60,6 +63,7 @@ func _ready() -> void:
 	current_tier = GameData.get_sword_for_level(sword_level)
 	_recalc_stats()
 	_refresh_sword_visual()
+	_init_sfx()
 	_emit_all()
 
 func _physics_process(delta: float) -> void:
@@ -74,6 +78,20 @@ func _physics_process(delta: float) -> void:
 	_handle_combat(delta)
 	_process_sword_effects(delta)
 	_update_sword_anim(delta)
+
+func _init_sfx() -> void:
+	_sfx_player = AudioStreamPlayer.new()
+	_sfx_player.name = "SFXPlayer"
+	add_child(_sfx_player)
+	for k in ["hit","swing","levelup","boss","ui"]:
+		var p = "res://assets/audio/%s.wav" % k
+		if ResourceLoader.exists(p):
+			_sfx[k] = load(p)
+
+func play_sfx(name: String) -> void:
+	if _sfx_player == null or not _sfx.has(name): return
+	_sfx_player.stream = _sfx[name]
+	_sfx_player.play()
 
 func _tick_cooldowns(delta: float) -> void:
 	for k in cooldowns.keys():
@@ -206,17 +224,17 @@ func perform_skill(skill: String) -> void:
 			whirlwind_timer = 1.1
 			whirlwind_tick = 0.0
 			_spawn_shockwave(global_position, current_tier["aura_color"], float(stats["range"]) * 1.4)
-			log_added.emit("¡Torbellino desatado!", "skill")
+			play_sfx("swing"); log_added.emit("¡Torbellino desatado!", "skill")
 		"swordWave":
 			cooldowns["swordWave"] = cd_max["swordWave"]
 			_spawn_wave_projectile()
 			_spawn_shockwave(global_position + Vector3(sin(rotation.y),0,cos(rotation.y))*1.5, current_tier["slash_color"], 3.0)
-			log_added.emit("¡Onda Cortante lanzada!", "skill")
+			play_sfx("swing"); log_added.emit("¡Onda Cortante lanzada!", "skill")
 		"ultimate":
 			cooldowns["ultimate"] = cd_max["ultimate"]
 			_spawn_ultimate_swords()
 			_spawn_shockwave(global_position, current_tier["aura_color"], 6.0)
-			log_added.emit("¡Lluvia de Espadas Celestiales!", "skill")
+			play_sfx("boss"); log_added.emit("¡Lluvia de Espadas Celestiales!", "skill")
 		"dash":
 			cooldowns["dash"] = cd_max["dash"]
 			dash_timer = 0.22
@@ -345,10 +363,10 @@ func gain_experience(amount: int) -> void:
 		_refresh_sword_visual()
 		var evolved := str(current_tier["id"]) != str(old_tier["id"])
 		if evolved:
-			log_added.emit("¡METAMORFOSIS AL NIVEL %d! Tu espada ha evolucionado a %s." % [sword_level, str(current_tier["name"]).to_upper()], "evolution")
+			play_sfx("levelup"); log_added.emit("¡METAMORFOSIS AL NIVEL %d! Tu espada ha evolucionado a %s." % [sword_level, str(current_tier["name"]).to_upper()], "evolution")
 			evolution_changed.emit(current_tier)
 		else:
-			log_added.emit("¡Tu espada subió al Nivel %d! El filo y poder aumentan." % sword_level, "levelup")
+			play_sfx("levelup"); log_added.emit("¡Tu espada subió al Nivel %d! El filo y poder aumentan." % sword_level, "levelup")
 		hp_changed.emit(player_hp, player_max_hp)
 	xp_changed.emit(current_xp, GameData.get_xp_required(sword_level), sword_level)
 
@@ -364,7 +382,7 @@ func add_kill() -> void:
 		wave_kills = 0
 		wave += 1
 		wave_changed.emit(wave, wave_kills)
-		log_added.emit("¡Oleada %d iniciada! Monstruos más fuertes emergen." % wave, "boss")
+		play_sfx("boss"); log_added.emit("¡Oleada %d iniciada! Monstruos más fuertes emergen." % wave, "boss")
 	else:
 		wave_changed.emit(wave, wave_kills)
 

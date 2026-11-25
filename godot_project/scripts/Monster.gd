@@ -31,12 +31,17 @@ var boss_telegraph: MeshInstance3D = null
 # HP bar
 var hp_bar_bg: MeshInstance3D
 var hp_bar_fill: MeshInstance3D
+# Distinct AI
+var ai_timer: float = 0.0
+var dash_dir: Vector3 = Vector3.ZERO
+var circling: int = 1
 
 @onready var model_holder: Node3D = $ModelHolder
 
 func setup(monster_def: Dictionary, wave: int, player_ref: Node3D) -> void:
 	def = monster_def
 	player = player_ref
+	monster_id = str(def.get("id", monster_id))
 	is_boss = bool(def.get("is_boss", false))
 	var wave_scale := 1.0 + (wave - 1) * 0.24
 	max_hp = int(round(float(def["base_hp"]) * wave_scale))
@@ -93,6 +98,9 @@ func _physics_process(delta: float) -> void:
 		if hp <= 0:
 			_die(player)
 			return
+	# troll regen
+	if monster_id == "troll" and hp > 0 and hp < max_hp:
+		hp = min(max_hp, hp + int(max(1.0, float(max_hp) * 0.02 * delta)))
 
 	# knockback decay
 	if knockback_vel.length_squared() > 0.01:
@@ -106,31 +114,12 @@ func _physics_process(delta: float) -> void:
 		var target_rot := atan2(to_player.x, to_player.z)
 		rotation.y = lerp_angle(rotation.y, target_rot, delta * 6.0)
 
+	ai_timer -= delta
 	var moving := false
 	if is_boss:
 		moving = _boss_ai(delta, dist)
 	else:
-		if dist > attack_range:
-			var dir := to_player.normalized()
-			velocity.x = dir.x * speed
-			velocity.z = dir.z * speed
-			moving = true
-			attack_anim = 0.0
-		else:
-			velocity.x = move_toward(velocity.x, 0.0, speed * 6.0 * delta)
-			velocity.z = move_toward(velocity.z, 0.0, speed * 6.0 * delta)
-			attack_cd -= delta
-			if attack_cd <= 0.0:
-				attack_cd = attack_cooldown_def
-				attack_anim = 0.01
-
-		if attack_anim > 0.0:
-			attack_anim += delta * 2.6
-			if attack_anim >= 0.5 and (attack_anim - delta * 2.6) < 0.5:
-				if dist <= attack_range + 0.7 and is_instance_valid(player) and player.has_method("take_player_damage"):
-					player.take_player_damage(damage)
-			if attack_anim >= 1.0:
-				attack_anim = 0.0
+		moving = _basic_ai(delta, dist, to_player)
 
 	# gravity / physics
 	if not is_on_floor():
@@ -189,6 +178,8 @@ func take_damage(amount: float, attacker: Node3D, is_heavy: bool = false, knockb
 		if loh > 0:
 			attacker.player_hp = min(attacker.player_max_hp, attacker.player_hp + loh)
 			attacker.hp_changed.emit(attacker.player_hp, attacker.player_max_hp)
+	if is_instance_valid(attacker) and attacker.has_method("play_sfx"):
+		attacker.play_sfx("hit")
 
 	# special effects
 	if can_trigger_effects and is_instance_valid(attacker):
@@ -263,13 +254,41 @@ func _die(attacker: Node3D) -> void:
 		var xp_mult := float(attacker.stats.get("xp_mult", 1.0))
 		var xp_gain := int(round(xp_reward * xp_mult))
 		var gold_gain := int(round(gold_reward * (1.0 + int(attacker.upgrades.get("soulMagnet", 0)) * 0.12)))
+		if is_boss:
+			xp_gain = int(round(xp_gain * 1.5))
+			gold_gain = int(round(gold_gain * 1.5))
 		attacker.gain_experience(xp_gain)
 		attacker.add_gold(gold_gain)
 		attacker.add_kill()
+		if is_boss and attacker.has_signal("log_added"):
+			attacker.log_added.emit("¡JEFE DERROTADO! %s cayó. +%d XP +%d oro" % [str(def.get("name","Jefe")), xp_gain, gold_gain], "boss")
 	# spawn simple loot visual
 	_spawn_loot_orbs()
+	if is_boss:
+		_spawn_boss_defeat_vfx()
 	queue_free()
 
+
+func _spawn_boss_defeat_vfx() -> void:
+	var root := get_tree().current_scene
+	if root == null: return
+	for i in range(12):
+		var orb := MeshInstance3D.new()
+		var s := SphereMesh.new(); s.radius = 0.22; s.height = 0.44
+		orb.mesh = s
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(1.0, 0.8, 0.2, 0.9)
+		mat.emission_enabled = true; mat.emission = Color(1.0,0.6,0.1); mat.emission_energy_multiplier = 4.0
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		orb.material_override = mat
+		root.add_child(orb)
+		orb.global_position = global_position + Vector3(0,1.0,0)
+		var ang := TAU * float(i) / 12.0
+		var target := orb.global_position + Vector3(cos(ang)*4.0, randf_range(0.5,2.5), sin(ang)*4.0)
+		var tw := root.create_tween()
+		tw.tween_property(orb, "global_position", target, 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.parallel().tween_property(mat, "albedo_color:a", 0.0, 0.8)
+		tw.tween_callback(orb.queue_free)
 func _spawn_loot_orbs() -> void:
 	var root := get_tree().current_scene
 	for i in range(2):
@@ -297,6 +316,82 @@ func _set_flash(active: bool) -> void:
 			if mat:
 				mat.emission_energy_multiplier = 2.5 if active else 0.35
 
+
+func _basic_ai(delta: float, dist: float, to_player: Vector3) -> bool:
+	var dir := to_player.normalized() if dist > 0.001 else Vector3.FORWARD
+	var move_speed := speed
+	var want_dist := attack_range
+	var moving := false
+
+	match monster_id:
+		"slime":
+			# slow blob, occasional hop
+			move_speed = speed * 0.9
+			if ai_timer <= 0.0 and is_on_floor() and dist < 8.0:
+				velocity.y = 5.5
+				ai_timer = randf_range(1.6, 2.8)
+		"goblin":
+			# fast, strafes/circles
+			move_speed = speed * 1.15
+			if dist < 4.0 and dist > attack_range:
+				var side := Vector3(-dir.z, 0, dir.x) * float(circling)
+				dir = (dir * 0.4 + side * 0.9).normalized()
+				if ai_timer <= 0.0:
+					circling *= -1
+					ai_timer = randf_range(0.8, 1.6)
+		"orc":
+			# heavy, steady
+			move_speed = speed * 0.95
+		"skeleton":
+			# quick lunge when close
+			if dist > 2.5 and dist < 6.0 and ai_timer <= 0.0:
+				dash_dir = dir
+				ai_timer = 1.4
+				velocity.x = dash_dir.x * speed * 2.2
+				velocity.z = dash_dir.z * speed * 2.2
+				return true
+			if ai_timer > 0.8:
+				velocity.x = move_toward(velocity.x, 0.0, speed * 2.0 * delta)
+				velocity.z = move_toward(velocity.z, 0.0, speed * 2.0 * delta)
+				return velocity.length() > 0.2
+		"troll":
+			# tanky slow
+			move_speed = speed * 0.85
+		"wraith":
+			# burst dash
+			move_speed = speed * 1.05
+			if dist < 10.0 and dist > 2.0 and ai_timer <= 0.0:
+				dash_dir = dir
+				ai_timer = 2.2
+				velocity.x = dash_dir.x * speed * 2.8
+				velocity.z = dash_dir.z * speed * 2.8
+				return true
+			if ai_timer > 1.6:
+				return velocity.length() > 0.2
+		_:
+			pass
+
+	if dist > want_dist:
+		velocity.x = dir.x * move_speed
+		velocity.z = dir.z * move_speed
+		moving = true
+		attack_anim = 0.0
+	else:
+		velocity.x = move_toward(velocity.x, 0.0, speed * 6.0 * delta)
+		velocity.z = move_toward(velocity.z, 0.0, speed * 6.0 * delta)
+		attack_cd -= delta
+		if attack_cd <= 0.0:
+			attack_cd = attack_cooldown_def
+			attack_anim = 0.01
+
+	if attack_anim > 0.0:
+		attack_anim += delta * 2.6
+		if attack_anim >= 0.5 and (attack_anim - delta * 2.6) < 0.5:
+			if dist <= attack_range + 0.7 and is_instance_valid(player) and player.has_method("take_player_damage"):
+				player.take_player_damage(damage)
+		if attack_anim >= 1.0:
+			attack_anim = 0.0
+	return moving
 func _boss_ai(delta: float, dist: float) -> bool:
 	boss_timer -= delta
 	match boss_state:

@@ -49,6 +49,10 @@ func _handle_spawning(delta: float) -> void:
 
 func _spawn_monster(force_boss: bool) -> void:
 	var wave := player.wave
+	if force_boss:
+		for e in get_tree().get_nodes_in_group("enemies"):
+			if is_instance_valid(e) and e.get("is_boss"):
+				return
 	var pool: Array = GameData.get_eligible_monsters(wave, force_boss)
 	var def: Dictionary = pool[rng.randi_range(0, pool.size() - 1)]
 	if force_boss:
@@ -94,6 +98,10 @@ func _wire_hud() -> void:
 
 func _on_wave_changed(wave: int, _wk: int) -> void:
 	if wave % 3 == 0:
+		# avoid duplicate boss
+		for e in get_tree().get_nodes_in_group("enemies"):
+			if is_instance_valid(e) and e.get("is_boss"):
+				return
 		_spawn_monster(true)
 
 func _notification(what: int) -> void:
