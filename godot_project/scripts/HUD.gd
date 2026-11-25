@@ -42,6 +42,11 @@ var combo_count: int = 0
 var minimap_panel: Control
 var minimap_dots: Array = []
 var branding_label: Label
+var settings_panel: Panel
+var inventory_panel: Panel
+var stats_panel: Panel
+var stats_label: RichTextLabel
+var inventory_label: RichTextLabel
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -72,6 +77,9 @@ func _build_ui() -> void:
 	_build_combo()
 	_build_minimap()
 	_build_branding()
+	_build_settings_panel()
+	_build_inventory_panel()
+	_build_stats_panel()
 
 func _panel_style(bg: Color, border: Color, radius: int = 10, border_w: int = 1) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
@@ -150,23 +158,23 @@ func _build_top_center() -> void:
 func _build_top_right() -> void:
 	var panel := HBoxContainer.new()
 	panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	panel.offset_left = -340.0
+	panel.offset_left = -430.0
 	panel.offset_right = -16.0
 	panel.offset_top = 14.0
 	panel.offset_bottom = 54.0
 	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	panel.add_theme_constant_override("separation", 8)
 	ui_root.add_child(panel)
-	for txt in ["Ajustes", "Pausa", "Inv", "Stats"]:
+	for txt in ["Ajustes", "Pausa", "Inventario", "Estadísticas"]:
 		var b := Button.new()
 		b.text = txt
-		b.custom_minimum_size = Vector2(72, 36)
+		b.custom_minimum_size = Vector2(92, 36)
 		_style_button(b)
 		panel.add_child(b)
 		if txt == "Pausa": b.pressed.connect(_toggle_pause)
-		if txt == "Ajustes": b.pressed.connect(func(): _on_log("Ajustes: próximamente", "upgrade"))
-		if txt == "Inv": b.pressed.connect(func(): _on_log("Inventario: próximamente", "upgrade"))
-		if txt == "Stats": b.pressed.connect(func(): _on_log("Stats: próximamente", "upgrade"))
+		if txt == "Ajustes": b.pressed.connect(_toggle_settings)
+		if txt == "Inventario": b.pressed.connect(_toggle_inventory)
+		if txt == "Estadísticas": b.pressed.connect(_toggle_stats)
 
 func _build_objective() -> void:
 	var panel := Panel.new()
@@ -206,29 +214,66 @@ func _build_right_forge() -> void:
 		panel.add_child(btn)
 		forge_buttons[key] = btn
 		y += 40
-	var hint := _label(panel, "WASD Click Q E R Shift", Vector2(12, 286), Vector2(196, 20), 10, Color(0.75,0.82,0.95,0.8))
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var mejorar := Button.new()
+	mejorar.name = "MejorarBtn"
+	mejorar.position = Vector2(12, 284)
+	mejorar.size = Vector2(196, 38)
+	mejorar.text = "Mejorar"
+	var mnormal := _panel_style(Color(0.2,0.55,0.95,0.95), Color(0.5,0.85,1.0,0.9), 10)
+	var mhover := _panel_style(Color(0.3,0.65,1.0,0.98), Color(0.7,0.92,1.0,1.0), 10)
+	mejorar.add_theme_stylebox_override("normal", mnormal)
+	mejorar.add_theme_stylebox_override("hover", mhover)
+	mejorar.add_theme_stylebox_override("pressed", mnormal)
+	mejorar.add_theme_stylebox_override("focus", mhover)
+	mejorar.add_theme_color_override("font_color", Color(1,1,1,1))
+	mejorar.add_theme_font_size_override("font_size", 18)
+	mejorar.pressed.connect(_on_mejorar_pressed)
+	panel.add_child(mejorar)
 
 func _build_bottom_skills() -> void:
 	var panel := HBoxContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	panel.offset_left = -290.0
-	panel.offset_right = 290.0
-	panel.offset_top = -104.0
-	panel.offset_bottom = -18.0
+	panel.offset_left = -320.0
+	panel.offset_right = 320.0
+	panel.offset_top = -132.0
+	panel.offset_bottom = -10.0
 	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	panel.alignment = BoxContainer.ALIGNMENT_CENTER
-	panel.add_theme_constant_override("separation", 14)
+	panel.add_theme_constant_override("separation", 16)
 	ui_root.add_child(panel)
-	for s in [["Q","Torbellino","whirlwind"],["E","Onda Cortante","swordWave"],["R","Lluvia de Espadas","ultimate"],["Shift","Dash","dash"]]:
+	var defs = [
+		["Q","Torbellino","whirlwind","res://assets/ui/skill_q.png"],
+		["E","Onda Cortante","swordWave","res://assets/ui/skill_e.png"],
+		["R","Lluvia de Espadas","ultimate","res://assets/ui/skill_r.png"],
+		["Shift","Dash","dash","res://assets/ui/skill_shift.png"],
+	]
+	for s in defs:
+		var wrap := VBoxContainer.new()
+		wrap.custom_minimum_size = Vector2(120, 118)
+		wrap.add_theme_constant_override("separation", 2)
+		panel.add_child(wrap)
 		var box := Panel.new()
-		box.custom_minimum_size = Vector2(110, 72)
-		box.add_theme_stylebox_override("panel", _panel_style(Color(0.08,0.12,0.22,0.72), Color(0.45,0.75,1.0,0.35), 12))
-		panel.add_child(box)
-		var keyl := _label(box, s[0], Vector2(0,4), Vector2(110,20), 20, Color(0.95,0.98,1.0), HORIZONTAL_ALIGNMENT_CENTER)
-		var namel := _label(box, s[1], Vector2(0,28), Vector2(110,18), 11, Color(0.8,0.9,1.0,0.95), HORIZONTAL_ALIGNMENT_CENTER)
-		var cdl := _label(box, "Listo", Vector2(0,48), Vector2(110,18), 12, Color(0.5,1.0,0.6), HORIZONTAL_ALIGNMENT_CENTER)
-		cd_nodes[s[2]] = {"panel": box, "cd": cdl}
+		box.custom_minimum_size = Vector2(120, 86)
+		box.add_theme_stylebox_override("panel", _panel_style(Color(0.06,0.12,0.24,0.82), Color(0.35,0.7,1.0,0.65), 14))
+		wrap.add_child(box)
+		var icon := TextureRect.new()
+		icon.texture = load(s[3])
+		icon.position = Vector2(24, 8)
+		icon.size = Vector2(72, 56)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		box.add_child(icon)
+		var key_badge := Panel.new()
+		key_badge.position = Vector2(4,4)
+		key_badge.size = Vector2(28 if s[0]!="Shift" else 42, 22)
+		key_badge.add_theme_stylebox_override("panel", _panel_style(Color(0.1,0.18,0.35,0.95), Color(0.5,0.8,1.0,0.7), 6))
+		box.add_child(key_badge)
+		var keyl := _label(key_badge, s[0], Vector2(0,2), key_badge.size, 12, Color(0.95,0.98,1.0), HORIZONTAL_ALIGNMENT_CENTER)
+		var cdl := _label(box, "Listo", Vector2(0,64), Vector2(120,18), 12, Color(0.5,1.0,0.6), HORIZONTAL_ALIGNMENT_CENTER)
+		var namel := _label(wrap, s[1], Vector2(0,0), Vector2(120,18), 12, Color(0.82,0.9,1.0,0.95), HORIZONTAL_ALIGNMENT_CENTER)
+		namel.custom_minimum_size = Vector2(120, 18)
+		namel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cd_nodes[s[2]] = {"panel": box, "cd": cdl, "icon": icon}
 
 func _build_log() -> void:
 	var panel := Panel.new()
@@ -414,6 +459,23 @@ func _update_forge_buttons() -> void:
 func _on_upgrade_pressed(key: String, base_cost: int) -> void:
 	if player: player.buy_upgrade(key, base_cost)
 
+func _on_mejorar_pressed() -> void:
+	if player == null: return
+	var base_costs = {"sharpness":25,"swiftness":30,"criticalMastery":35,"vampirism":40,"soulMagnet":30,"bladeSize":45}
+	var best_key := ""
+	var best_cost := 999999
+	for k in base_costs.keys():
+		var lvl = int(player.upgrades.get(k, 0))
+		if lvl >= 10: continue
+		var cost = int(round(base_costs[k] * pow(1.45, lvl)))
+		if player.gold >= cost and cost < best_cost:
+			best_cost = cost
+			best_key = k
+	if best_key != "":
+		player.buy_upgrade(best_key, int(base_costs[best_key]))
+	else:
+		_on_log("No hay mejora asequible", "upgrade")
+
 func _process(delta: float) -> void:
 	_update_boss_bar()
 	_update_cooldowns()
@@ -572,3 +634,148 @@ func _build_branding() -> void:
 	branding_label.add_theme_font_size_override("font_size", 14)
 	branding_label.add_theme_color_override("font_color", Color(0.8,0.9,1.0,0.85))
 	add_child(branding_label)
+
+
+func _build_overlay_panel(title: String, size: Vector2) -> Panel:
+	var p := Panel.new()
+	p.visible = false
+	p.set_anchors_preset(Control.PRESET_CENTER)
+	p.offset_left = -size.x / 2
+	p.offset_right = size.x / 2
+	p.offset_top = -size.y / 2
+	p.offset_bottom = size.y / 2
+	p.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	p.grow_vertical = Control.GROW_DIRECTION_BOTH
+	p.add_theme_stylebox_override("panel", _panel_style(Color(0.06,0.08,0.14,0.95), Color(0.45,0.7,1.0,0.35), 14))
+	add_child(p)
+	var t := _label(p, title, Vector2(20, 14), Vector2(size.x - 40, 30), 24, Color(1.0,0.9,0.55))
+	var close := Button.new()
+	close.text = "X"
+	close.position = Vector2(size.x - 46, 12)
+	close.size = Vector2(34, 34)
+	_style_button(close)
+	close.pressed.connect(func(): p.visible = false)
+	p.add_child(close)
+	return p
+
+func _build_settings_panel() -> void:
+	settings_panel = _build_overlay_panel("Ajustes", Vector2(520, 360))
+	var y := 64.0
+	var info := _label(settings_panel, "Calidad / Audio (funcional básico)", Vector2(20,y), Vector2(480,24), 14, Color(0.8,0.9,1.0))
+	y += 36
+	for opt in [["Calidad Baja","low"],["Calidad Media","medium"],["Calidad Alta","high"]]:
+		var b := Button.new()
+		b.text = opt[0]
+		b.position = Vector2(20, y)
+		b.size = Vector2(150, 38)
+		_style_button(b)
+		var q = opt[1]
+		b.pressed.connect(func(): _apply_quality(q))
+		settings_panel.add_child(b)
+		y += 0
+		# place horizontally by changing x
+		b.position.x = 20 + (["low","medium","high"].find(opt[1]) * 160)
+		b.position.y = 100
+	y = 160
+	var audio_lbl := _label(settings_panel, "Audio: ON/OFF", Vector2(20,160), Vector2(200,24), 16, Color(0.9,0.95,1.0))
+	var audio_btn := Button.new()
+	audio_btn.text = "Alternar Audio"
+	audio_btn.position = Vector2(20, 190)
+	audio_btn.size = Vector2(180, 38)
+	_style_button(audio_btn)
+	audio_btn.pressed.connect(_toggle_audio)
+	settings_panel.add_child(audio_btn)
+	var note := _label(settings_panel, "Nota: la configuración se aplica en runtime.\nAudio completo y más opciones se ampliarán.", Vector2(20,250), Vector2(460,60), 13, Color(0.75,0.82,0.92,0.9))
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+func _apply_quality(q: String) -> void:
+	var vp := get_viewport()
+	if vp == null: return
+	match q:
+		"low":
+			vp.msaa_3d = Viewport.MSAA_DISABLED
+			ProjectSettings.set_setting("rendering/lights_and_shadows/directional_shadow/size", 1024)
+		"medium":
+			vp.msaa_3d = Viewport.MSAA_2X
+			ProjectSettings.set_setting("rendering/lights_and_shadows/directional_shadow/size", 2048)
+		"high":
+			vp.msaa_3d = Viewport.MSAA_4X
+			ProjectSettings.set_setting("rendering/lights_and_shadows/directional_shadow/size", 4096)
+	_on_log("Calidad aplicada: %s" % q, "upgrade")
+
+var _audio_muted := false
+func _toggle_audio() -> void:
+	_audio_muted = not _audio_muted
+	AudioServer.set_bus_mute(0, _audio_muted)
+	_on_log("Audio: %s" % ("OFF" if _audio_muted else "ON"), "upgrade")
+
+func _build_inventory_panel() -> void:
+	inventory_panel = _build_overlay_panel("Inventario", Vector2(560, 420))
+	inventory_label = RichTextLabel.new()
+	inventory_label.position = Vector2(20, 56)
+	inventory_label.size = Vector2(520, 340)
+	inventory_label.bbcode_enabled = false
+	inventory_label.add_theme_font_size_override("normal_font_size", 15)
+	inventory_label.add_theme_color_override("default_color", Color(0.9,0.94,1.0))
+	inventory_panel.add_child(inventory_label)
+
+func _build_stats_panel() -> void:
+	stats_panel = _build_overlay_panel("Estadísticas", Vector2(560, 420))
+	stats_label = RichTextLabel.new()
+	stats_label.position = Vector2(20, 56)
+	stats_label.size = Vector2(520, 340)
+	stats_label.bbcode_enabled = false
+	stats_label.add_theme_font_size_override("normal_font_size", 15)
+	stats_label.add_theme_color_override("default_color", Color(0.9,0.94,1.0))
+	stats_panel.add_child(stats_label)
+
+func _toggle_settings() -> void:
+	if settings_panel: settings_panel.visible = not settings_panel.visible
+	if inventory_panel: inventory_panel.visible = false
+	if stats_panel: stats_panel.visible = false
+
+func _toggle_inventory() -> void:
+	if inventory_panel:
+		inventory_panel.visible = not inventory_panel.visible
+		if inventory_panel.visible: _refresh_inventory()
+	if settings_panel: settings_panel.visible = false
+	if stats_panel: stats_panel.visible = false
+
+func _toggle_stats() -> void:
+	if stats_panel:
+		stats_panel.visible = not stats_panel.visible
+		if stats_panel.visible: _refresh_stats()
+	if settings_panel: settings_panel.visible = false
+	if inventory_panel: inventory_panel.visible = false
+
+func _refresh_inventory() -> void:
+	if player == null or inventory_label == null: return
+	var tier = GameData.get_sword_for_level(player.sword_level)
+	var lines := []
+	lines.append("Espada actual: %s (Nv.%d)" % [str(tier.get("name","")), player.sword_level])
+	lines.append("Oro: %d" % player.gold)
+	lines.append("Kills: %d  |  Oleada: %d" % [player.kills, player.wave])
+	lines.append("")
+	lines.append("Mejoras:")
+	var base_costs = {"sharpness":25,"swiftness":30,"criticalMastery":35,"vampirism":40,"soulMagnet":30,"bladeSize":45}
+	var names = {"sharpness":"Afilar","swiftness":"Ligereza","criticalMastery":"Crítico","vampirism":"Vampiro","soulMagnet":"Almas","bladeSize":"Colosal"}
+	for k in names.keys():
+		var lvl = int(player.upgrades.get(k,0))
+		var cost = int(round(base_costs[k] * pow(1.45, lvl)))
+		lines.append("- %s: Lv.%d/10 (siguiente: %dg)" % [names[k], lvl, cost])
+	inventory_label.text = "\n".join(lines)
+
+func _refresh_stats() -> void:
+	if player == null or stats_label == null: return
+	var tier = GameData.get_sword_for_level(player.sword_level)
+	var lines := []
+	lines.append("Nivel espada: %d" % player.sword_level)
+	lines.append("HP: %d / %d" % [player.player_hp, player.player_max_hp])
+	lines.append("Daño: %d" % player.damage)
+	lines.append("Velocidad: %.2f" % player.speed)
+	lines.append("Crit: %.1f%%" % (player.crit_chance * 100.0))
+	lines.append("Vampirismo: %.1f%%" % (player.lifesteal * 100.0))
+	lines.append("Oro: %d | Kills: %d | Oleada: %d" % [player.gold, player.kills, player.wave])
+	lines.append("Espada: %s" % str(tier.get("name","")))
+	lines.append("Efecto especial: %s" % str(tier.get("special_effect","none")))
+	stats_label.text = "\n".join(lines)
