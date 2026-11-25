@@ -242,9 +242,9 @@ func _spawn_wave_projectile() -> void:
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mesh_inst.material_override = mat
 	proj.add_child(mesh_inst)
+	scene_root.add_child(proj)
 	proj.global_position = global_position + Vector3(0, 1.3, 0)
 	proj.rotation.y = rotation.y
-	scene_root.add_child(proj)
 	var script := preload("res://scripts/SwordWave.gd")
 	proj.set_script(script)
 	proj.setup(Vector3(sin(rotation.y), 0, cos(rotation.y)) * 20.0, float(stats["damage"]) * 1.9, self)
@@ -263,8 +263,8 @@ func _spawn_ultimate_swords() -> void:
 		# Point blade downward
 		sword_visual.rotation.z = PI
 		node.add_child(sword_visual)
-		node.global_position = target + Vector3(0, 18.0 + i * 2.2, 0)
 		scene_root.add_child(node)
+		node.global_position = target + Vector3(0, 18.0 + i * 2.2, 0)
 		var script := preload("res://scripts/SkySword.gd")
 		node.set_script(script)
 		node.setup(target, float(stats["damage"]) * 2.5, self, float(i) * 0.08)
@@ -405,25 +405,74 @@ func _refresh_sword_visual() -> void:
 
 func _update_sword_anim(delta: float) -> void:
 	var t := Time.get_ticks_msec() / 1000.0
-	if wielder_mode == "living_sword" and whirlwind_timer <= 0.0:
-		sword_pivot.position.y = 1.55 + sin(t * 3.5) * 0.18
-	if whirlwind_timer > 0.0:
-		sword_mesh_holder.rotation.x = PI * 0.46
-	elif attack_anim > 0.0:
-		var p := 1.0 - (attack_anim / 0.28)
-		var swing := sin(p * PI)
-		if combo_step == 0:
-			sword_mesh_holder.rotation.z = -1.35 + swing * 2.5
-			sword_mesh_holder.rotation.x = 0.95
-		elif combo_step == 1:
-			sword_mesh_holder.rotation.z = 1.35 - swing * 2.5
-			sword_mesh_holder.rotation.x = 0.85
-		else:
-			sword_mesh_holder.rotation.x = -0.7 + swing * 2.1
-			sword_mesh_holder.rotation.z = 0.0
+	var moving := Vector2(velocity.x, velocity.z).length() > 0.5
+	var speed_factor: float = clamp(Vector2(velocity.x, velocity.z).length() / move_speed, 0.0, 1.5)
+
+	# Base bob/lean
+	var bob: float = sin(t * (8.0 if moving else 2.8)) * (0.08 if moving else 0.04)
+	var lean: float = 0.0
+	if moving:
+		lean = clamp(speed_factor * 0.22, 0.0, 0.28)
+
+	if wielder_mode == "living_sword":
+		var base_y := 1.55 + (sin(t * 3.5) * 0.18 if whirlwind_timer <= 0.0 else 0.0)
+		sword_pivot.position.y = lerp(sword_pivot.position.y, base_y + bob, delta * 8.0)
+		sword_pivot.rotation.x = lerp_angle(sword_pivot.rotation.x, lean, delta * 8.0)
+		sword_pivot.position.x = lerp(sword_pivot.position.x, 0.0, delta * 8.0)
+		knight_holder.position.y = lerp(knight_holder.position.y, 0.0, delta * 8.0)
 	else:
-		sword_mesh_holder.rotation.x = lerp_angle(sword_mesh_holder.rotation.x, 0.22 if wielder_mode == "living_sword" else 0.35, delta * 10.0)
+		sword_pivot.position.y = lerp(sword_pivot.position.y, 1.2 + bob * 0.5, delta * 8.0)
+		sword_pivot.position.x = lerp(sword_pivot.position.x, 0.6, delta * 8.0)
+		sword_pivot.rotation.x = lerp_angle(sword_pivot.rotation.x, lean * 0.5, delta * 8.0)
+		knight_holder.position.y = lerp(knight_holder.position.y, bob * 0.35, delta * 8.0)
+		knight_holder.rotation.x = lerp_angle(knight_holder.rotation.x, lean * 0.6, delta * 8.0)
+
+	if dash_timer > 0.0:
+		sword_mesh_holder.rotation.x = lerp_angle(sword_mesh_holder.rotation.x, 1.25, delta * 16.0)
+		sword_mesh_holder.rotation.z = lerp_angle(sword_mesh_holder.rotation.z, 0.0, delta * 16.0)
+		sword_mesh_holder.rotation.y = lerp_angle(sword_mesh_holder.rotation.y, 0.0, delta * 16.0)
+		sword_pivot.rotation.x = lerp_angle(sword_pivot.rotation.x, 0.55, delta * 12.0)
+		sword_pivot.position.z = lerp(sword_pivot.position.z, -0.35, delta * 12.0)
+	elif whirlwind_timer > 0.0:
+		sword_mesh_holder.rotation.x = lerp_angle(sword_mesh_holder.rotation.x, PI * 0.46, delta * 14.0)
+		sword_mesh_holder.rotation.z = lerp_angle(sword_mesh_holder.rotation.z, 0.0, delta * 14.0)
+		sword_mesh_holder.rotation.y += delta * 28.0
+		sword_pivot.rotation.y += delta * 18.0
+	elif attack_anim > 0.0:
+		var p: float = 1.0 - (attack_anim / 0.28)
+		var windup: float = smoothstep(0.0, 0.25, p)
+		var swing: float = smoothstep(0.25, 0.75, p)
+		var recover: float = smoothstep(0.75, 1.0, p)
+		if combo_step == 0:
+			# Right-to-left horizontal slash
+			var ang: float = lerp(-1.55, 1.55, swing) - windup * 0.3 + recover * 0.1
+			sword_mesh_holder.rotation.z = ang
+			sword_mesh_holder.rotation.x = lerp(0.55, 1.05, sin(p * PI))
+			sword_mesh_holder.rotation.y = lerp(-0.35, 0.35, swing)
+			sword_pivot.rotation.y = lerp(sword_pivot.rotation.y, -0.25 + swing * 0.5, delta * 10.0)
+		elif combo_step == 1:
+			# Left-to-right horizontal slash
+			var ang2: float = lerp(1.55, -1.55, swing) + windup * 0.3 - recover * 0.1
+			sword_mesh_holder.rotation.z = ang2
+			sword_mesh_holder.rotation.x = lerp(0.55, 1.0, sin(p * PI))
+			sword_mesh_holder.rotation.y = lerp(0.35, -0.35, swing)
+			sword_pivot.rotation.y = lerp(sword_pivot.rotation.y, 0.25 - swing * 0.5, delta * 10.0)
+		else:
+			# Overhead slam
+			sword_mesh_holder.rotation.x = lerp(-1.15, 1.75, swing) - windup * 0.4
+			sword_mesh_holder.rotation.z = lerp(0.0, 0.15, sin(p * PI))
+			sword_mesh_holder.rotation.y = 0.0
+			sword_pivot.position.y += sin(p * PI) * 0.03
+		# small lunge feel
+		sword_pivot.position.z = lerp(sword_pivot.position.z, -sin(p * PI) * 0.25, delta * 12.0)
+	else:
+		var idle_x := 0.22 if wielder_mode == "living_sword" else 0.35
+		sword_mesh_holder.rotation.x = lerp_angle(sword_mesh_holder.rotation.x, idle_x, delta * 10.0)
 		sword_mesh_holder.rotation.z = lerp_angle(sword_mesh_holder.rotation.z, sin(t * 2.8) * 0.12, delta * 10.0)
+		sword_mesh_holder.rotation.y = lerp_angle(sword_mesh_holder.rotation.y, sin(t * 1.6) * 0.06, delta * 8.0)
+		sword_pivot.rotation.y = lerp_angle(sword_pivot.rotation.y, 0.0, delta * 8.0)
+		sword_pivot.position.z = lerp(sword_pivot.position.z, 0.0, delta * 8.0)
+
 	# slash ring fade
 	if slash_ring.visible:
 		var mat: StandardMaterial3D = slash_ring.material_override
@@ -446,8 +495,8 @@ func _spawn_shockwave(pos: Vector3, color: Color, max_radius: float = 4.0) -> vo
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	ring.material_override = mat
-	ring.global_position = Vector3(pos.x, 0.08, pos.z)
 	get_tree().current_scene.add_child(ring)
+	ring.global_position = Vector3(pos.x, 0.08, pos.z)
 	var tw := get_tree().current_scene.create_tween()
 	tw.tween_property(ring, "scale", Vector3(max_radius, 1.0, max_radius), 0.3)
 	tw.parallel().tween_property(mat, "albedo_color:a", 0.0, 0.3)
@@ -466,8 +515,15 @@ func _show_slash() -> void:
 	var crescent = CG.create_crescent_wave(float(stats["range"]) * 0.85, 1.1)
 	slash_ring.mesh = crescent
 	slash_ring.visible = true
-	slash_ring.rotation = Vector3(0, 0, 0)
-	slash_ring.position.y = 1.25
+	# Orient slash by combo step for web-like feel
+	if combo_step == 0:
+		slash_ring.rotation = Vector3(PI * 0.5, 0.0, -0.35)
+	elif combo_step == 1:
+		slash_ring.rotation = Vector3(PI * 0.5, 0.0, 0.35)
+	else:
+		slash_ring.rotation = Vector3(PI * 0.5, 0.0, PI * 0.5)
+	slash_ring.position = Vector3(0, 1.25, 0.0)
+	slash_ring.scale = Vector3(1.0, 1.0, 1.0)
 
 func _find_nearest_enemy() -> Node3D:
 	var nearest: Node3D = null

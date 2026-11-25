@@ -57,8 +57,8 @@ func _spawn_impact_ring() -> void:
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	ring.material_override = mat
-	ring.position = Vector3(target_pos.x, 0.15, target_pos.z)
 	get_tree().current_scene.add_child(ring)
+	ring.global_position = Vector3(target_pos.x, 0.15, target_pos.z)
 	var tw := get_tree().current_scene.create_tween()
 	tw.tween_property(ring, "scale", Vector3(5.2, 1.0, 5.2), 0.35)
 	tw.parallel().tween_property(mat, "albedo_color:a", 0.0, 0.35)
