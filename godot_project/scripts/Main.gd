@@ -109,3 +109,17 @@ func _notification(what: int) -> void:
 		if has_node("/root/SaveSystem") and is_instance_valid(player):
 			get_node("/root/SaveSystem").save_game(player)
 		get_tree().quit()
+
+
+func _play_music() -> void:
+	if not ResourceLoader.exists("res://assets/audio/ambient.wav"): return
+	_music = AudioStreamPlayer.new()
+	_music.name = "Music"
+	var st = load("res://assets/audio/ambient.wav")
+	if st is AudioStreamWAV:
+		st.loop_mode = AudioStreamWAV.LOOP_FORWARD
+		st.loop_end = int(st.data.size() / 2)
+	_music.stream = st
+	_music.volume_db = -10.0
+	add_child(_music)
+	_music.play()
