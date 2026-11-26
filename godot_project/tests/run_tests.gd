@@ -49,6 +49,7 @@ func _process(_delta: float) -> bool:
 	test_save_v3_permanent_evolution_survival()
 	test_player_evolution_integration()
 	test_evolution_skill_ui_panels()
+	test_skill_slots_world_events_and_energy()
 
 	print("=== RESULTS: %d passed, %d failed ===" % [passes, failures.size()])
 	for f in failures:
@@ -395,6 +396,7 @@ func test_runtime_malakor_phases_and_rewards() -> void:
 	assert_eq(p.bosses_defeated, 1, "bosses_defeated incremented once")
 	assert_eq(int(tracker["reward_events"]), 1, "boss_defeated_reward emitted once")
 	assert_true(int(p.materials.get("corazon_abismo", 0)) >= 1, "Malakor guarantees Corazon de Malakor drop")
+	assert_true(p.evolution_manager.has_world_event("defeated_malakor"), "Malakor defeat records permanent evolution world event")
 
 	world.free()
 	gd.free()
@@ -892,6 +894,51 @@ func test_evolution_skill_ui_panels() -> void:
 	hud._toggle_evolution()
 	assert_true(hud.evolution_panel.visible, "Evolution modal reopens")
 	hud._close_sub_modals()
+	hud.free()
+	world.free()
+
+func test_skill_slots_world_events_and_energy() -> void:
+	var world := Node3D.new()
+	root.add_child(world)
+	var p := _make_test_player(world)
+	var sm = p.skill_manager
+
+	# Learn an extra active skill and EQUIP it into Q — input routing must follow the loadout
+	assert_true(bool(sm.unlock_skill("def_act_bark", 1, "origin").get("ok", false)), "learn def_act_bark with starter skill point")
+	assert_true(sm.equip_active_skill("Q", "def_act_bark"), "equip def_act_bark into Q slot")
+	assert_eq(str(sm.equipped_slots["Q"]), "def_act_bark", "Q slot holds newly equipped skill")
+	p.perform_slot("Q")
+	assert_true(float(p.cooldowns.get("def_act_bark", 0.0)) > 0.0, "perform_slot(Q) casts the EQUIPPED skill, not a hardcoded one")
+	assert_true(float(p.energy) < float(p.stats["max_energy"]), "equipped skill drained spiritual energy")
+	p.perform_slot("E")
+	assert_true(float(p.cooldowns.get("swordWave", 0.0)) > 0.0, "E slot defaults to canonical swordWave")
+	assert_eq(str(sm.get_equipped_skill_for_slot("SHIFT")), "dash", "SHIFT slot keeps dash by default")
+
+	# HUD slot binding & label reflection
+	var hud = load("res://scripts/HUD.gd").new()
+	root.add_child(hud)
+	hud.connect_player(p)
+	assert_eq(str(hud.cd_nodes["Q"]["skill"]), "def_act_bark", "HUD Q cooldown curtain bound to equipped skill")
+	assert_eq(str(hud.slot_skill_ids["Q"]), "def_act_bark", "slot_skill_ids reflects loadout")
+	var name_lbl: Label = hud.slot_nodes["Q"]["name"]
+	assert_true(name_lbl.text.find("Corteza") != -1, "HUD slot label shows equipped skill name (got '%s')" % name_lbl.text)
+
+	# Live world events feed permanent evolution conditions
+	for i in range(24):
+		p.add_kill()
+	assert_true(p.wave >= 3, "waves advanced via kills")
+	assert_true(p.evolution_manager.has_world_event("wave_3_cleared"), "wave_3_cleared world event recorded live")
+	assert_true(int(p.evolution_manager.evolution_xp) > 0, "kills grant evolution essence")
+	p.notify_boss_defeated()
+	assert_true(p.evolution_manager.has_world_event("defeated_malakor"), "notify_boss_defeated records world event")
+
+	# Spiritual energy HUD & nav pills
+	assert_true(hud.energy_bar != null and hud.energy_text != null, "energy bar & text built in bottom skills panel")
+	hud._process(0.016)
+	assert_true(absf(float(hud.energy_bar.value) - float(p.energy)) < 0.5, "energy bar mirrors live player energy")
+	assert_true(str(hud.energy_text.text).find("⚡") != -1, "energy text shows bolt glyph")
+	assert_true(str(hud.evo_pill_btn.text).find("Etapa") != -1, "evo pill shows live stage")
+	assert_true(str(hud.skills_pill_btn.text).find("Pts:") != -1, "skills pill shows live skill points")
 	hud.free()
 	world.free()
 

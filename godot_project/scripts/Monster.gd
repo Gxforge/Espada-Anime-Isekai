@@ -378,6 +378,8 @@ func _die(attacker: Node3D) -> void:
 			gold_gain = int(round(float(gold_gain) * 1.6))
 			if "bosses_defeated" in attacker:
 				attacker.bosses_defeated += 1
+				if attacker.has_method("notify_boss_defeated"):
+					attacker.notify_boss_defeated()
 
 		# RPG Loot & Material Drops
 		dropped_names = _grant_rpg_loot(attacker)

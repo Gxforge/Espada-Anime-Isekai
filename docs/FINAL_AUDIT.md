@@ -73,7 +73,7 @@ This continuation completes the prioritized reconstruction deliverables on `feat
 | Complete Audio System & Persistent Volume Mixer | **PASS** | `AudioManager.gd` (`Master`/`Music`/`SFX` buses, 3 music tracks with crossfade, 16 SFX WAVs) + persistent sliders in `Ajustes`. |
 | Complete Malakor 2-Phase Encounter & Rewards | **PASS** | Phase I (`chase`, `slam`, `charge`) + Phase II (`meteor` barrage, enraged cadence), boss HP bar, music crossfade, anti-duplicate `_dead` guard, guaranteed `corazon_abismo` drop, victory banner. |
 | SaveSystem v2 + Legacy v1 Migration | **PASS** | Atomic JSON write, full RPG state + audio/quality persistence, verified v1 -> v2 migration in `run_tests.gd`. |
-| Expanded Real Automated Tests | **PASS** | `732 passed, 0 failed` in `godot_project/tests/run_tests.gd` (Phase B suite included). |
+| Expanded Real Automated Tests | **PASS** | `752 passed, 0 failed` in `godot_project/tests/run_tests.gd` (Phase B suite + loadout/world-event/energy integration). |
 | Linux Export (`ForjaDeAlmas3D.x86_64`) | **PASS** | 70 MB ELF x86_64 binary generated and smoke-executed locally + in CI. Re-verified after Phase B (`79.7 MB`, evolution/skill JSON catalogs confirmed embedded in PCK). |
 | Windows Export (`ForjaDeAlmas3D.exe`) | **PARTIAL** | 97 MB PE32+ x86_64 `.exe` generated and verified via `file` locally + in CI (re-verified after Phase B: `107.5 MB`); native Windows OS interactive run is `NOT TESTED` from Linux. |
 | Studio Lexair Pilot Sword #01 (`Espada de Madera Ancestral`) | **PASS** | Bespoke Blender 4.3 model (3,278 verts / 6,264 tris / 7 sub-parts), clean UVs, 5x 1024² PBR maps, editable `.blend`, neutral Cycles turnaround (`view_01..07`), live Godot 4.4 Vulkan verification (`view_08`), technical sheet, and GLB import test. |
@@ -82,6 +82,7 @@ This continuation completes the prioritized reconstruction deliverables on `feat
 | 17-Stat Combat Calculator | **PASS** | `SwordStatsCalculator.gd` merges form base stats, level scaling, forge upgrades, relics, and passive skill modifiers with clamped ranges; legacy combat keys preserved. |
 | Save v3 (Permanent Evolution Persistence) | **PASS** | `SAVE_VERSION = 3`; v1/v2 -> v3 migrations; tamper test proves committed form is NEVER re-derived from `sword_level`; roundtrip preserves history, sealed branches, skills & slots. |
 | Evolution Tree & Skill Tree UI Modals | **PASS** | `[T]`/`[K]` modals verified visually via Xvfb + Vulkan at 1280x720; era/tree filters, unlock conditions, permanent-commit and slot-assignment buttons; zero HUD overlaps at all 4 resolutions. |
+| Loadout Slots, Spiritual Energy & Live World Events | **PASS** | `perform_slot()` casts the EQUIPPED skill (verified: `def_act_bark` equipped into Q casts with its own cooldown/energy cost); HUD bottom panel re-binds cooldown curtains + labels on loadout change and shows the ⚡ energy bar (`hud_energy_slots_1280x720.png`); `wave_3_cleared` recorded live by kills and `defeated_malakor` by the Malakor death handler. |
 | Hardware GPU 60 FPS Target Verification | **NOT TESTED** | Only software CPU rasterizer (`llvmpipe`, 2.38 FPS at 1600x900 Forward+) available in container; physical GPU FPS not tested. |
 
 ---

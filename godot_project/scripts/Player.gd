@@ -241,13 +241,13 @@ func _handle_combat(delta: float) -> void:
 			_aim_at_mouse()
 			perform_attack()
 	if Input.is_action_just_pressed("skill_whirlwind"):
-		perform_skill("whirlwind")
+		perform_slot("Q")
 	if Input.is_action_just_pressed("skill_wave"):
-		perform_skill("swordWave")
+		perform_slot("E")
 	if Input.is_action_just_pressed("skill_ultimate"):
-		perform_skill("ultimate")
+		perform_slot("R")
 	if Input.is_action_just_pressed("skill_dash"):
-		perform_skill("dash")
+		perform_slot("SHIFT")
 
 	var h_down := Input.is_physical_key_pressed(KEY_H)
 	if h_down and not _potion_key_was_down:
@@ -307,6 +307,26 @@ func get_effective_cd_max(skill: String) -> float:
 		base = float(skill_manager.catalog.get_skill(skill).get("cooldown", base))
 	var cdr: float = clampf(float(stats.get("cd_reduction", 0.0)), 0.0, 0.45)
 	return maxf(0.4, base * (1.0 - cdr))
+
+## Casts whatever learned active skill is equipped in a loadout slot (Q / E / R / SHIFT).
+func perform_slot(slot: String) -> void:
+	var sid := ""
+	if skill_manager != null:
+		sid = skill_manager.get_equipped_skill_for_slot(slot)
+	if sid == "":
+		sid = _slot_default_skill(slot)
+	perform_skill(sid)
+
+func _slot_default_skill(slot: String) -> String:
+	match slot:
+		"Q":
+			return "whirlwind"
+		"E":
+			return "swordWave"
+		"R":
+			return "ultimate"
+		_:
+			return "dash"
 
 func perform_skill(skill: String) -> void:
 	if is_dead:
@@ -552,6 +572,9 @@ func add_kill() -> void:
 		wave_kills = 0
 		wave += 1
 		wave_changed.emit(wave, wave_kills)
+		# World-event milestones feed the permanent evolution unlock evaluator
+		if wave >= 3 and evolution_manager != null:
+			evolution_manager.record_world_event("wave_3_cleared")
 		if wave % 3 == 0:
 			play_sfx("boss", 0.95, 1.0)
 			log_added.emit("¡OLEADA %d! ¡El Jefe Supremo Malakor emerge del Abismo!" % wave, "boss")
@@ -810,6 +833,12 @@ func try_evolve(target_form_id: String) -> Dictionary:
 func add_evolution_essence(amount: int) -> void:
 	if evolution_manager != null:
 		evolution_manager.add_evolution_xp(maxi(0, amount))
+
+## Called when any boss dies by this player's hand; feeds the world-event
+## unlock conditions of the permanent evolution system (e.g. Malakor branches).
+func notify_boss_defeated() -> void:
+	if evolution_manager != null:
+		evolution_manager.record_world_event("defeated_malakor")
 
 func _get_relic_bonuses() -> Dictionary:
 	var gd := _get_gamedata()

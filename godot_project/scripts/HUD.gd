@@ -80,6 +80,10 @@ var skill_tree_filter: String = ""
 var evo_pill_btn: Button
 var skills_pill_btn: Button
 var evo_nav_column: VBoxContainer
+var energy_bar: ProgressBar
+var energy_text: Label
+var slot_nodes: Dictionary = {}
+var slot_skill_ids: Dictionary = {}
 var stats_label: RichTextLabel
 var codex_label: RichTextLabel
 var inventory_label: RichTextLabel
@@ -488,26 +492,40 @@ func _build_right_forge() -> void:
 func _build_bottom_skills() -> void:
 	bottom_skills_panel = Panel.new()
 	bottom_skills_panel.name = "BottomSkillsPanel"
-	bottom_skills_panel.size = Vector2(604, 122)
+	bottom_skills_panel.size = Vector2(604, 140)
 	bottom_skills_panel.add_theme_stylebox_override(
 		"panel",
 		_panel_style(Color(0.03, 0.06, 0.14, 0.84), Color(0.38, 0.68, 1.0, 0.42), 16, 1, 6)
 	)
 	ui_root.add_child(bottom_skills_panel)
 
+	# Spiritual energy bar (17-stat schema: energy_regen / max_energy)
+	_label(bottom_skills_panel, "⚡", Vector2(12, 5), Vector2(18, 16), 11, Color(0.55, 0.85, 1.0))
+	energy_bar = ProgressBar.new()
+	energy_bar.name = "EnergyBar"
+	energy_bar.position = Vector2(30, 9)
+	energy_bar.size = Vector2(478, 11)
+	energy_bar.show_percentage = false
+	energy_bar.max_value = 100.0
+	energy_bar.value = 100.0
+	energy_bar.add_theme_stylebox_override("background", _panel_style(Color(0.05, 0.08, 0.16, 0.94), Color(1, 1, 1, 0.12), 5))
+	energy_bar.add_theme_stylebox_override("fill", _panel_style(Color(0.30, 0.62, 1.0, 0.96), Color(0.62, 0.92, 1.0, 0.5), 5))
+	bottom_skills_panel.add_child(energy_bar)
+	energy_text = _label(bottom_skills_panel, "⚡ 100/100", Vector2(512, 6), Vector2(80, 16), 11, Color(0.84, 0.93, 1.0), HORIZONTAL_ALIGNMENT_RIGHT)
+
 	var hbox := HBoxContainer.new()
-	hbox.position = Vector2(12, 8)
+	hbox.position = Vector2(12, 26)
 	hbox.size = Vector2(580, 92)
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	hbox.add_theme_constant_override("separation", 10)
 	bottom_skills_panel.add_child(hbox)
 
 	var defs := [
-		["Click", "Tajo Combo", "basic", "res://assets/ui/skill_attack.png", Color(0.98, 0.76, 0.25, 0.72)],
-		["Q", "Torbellino", "whirlwind", "res://assets/ui/skill_q.png", Color(0.28, 0.78, 1.0, 0.72)],
-		["E", "Onda Hoja", "swordWave", "res://assets/ui/skill_e.png", Color(0.76, 0.48, 1.0, 0.72)],
-		["R", "Lluvia Espadas", "ultimate", "res://assets/ui/skill_r.png", Color(0.98, 0.44, 0.32, 0.78)],
-		["Shift", "Impulso", "dash", "res://assets/ui/skill_shift.png", Color(0.28, 0.88, 0.62, 0.72)],
+		["Click", "Tajo Combo", "basic", "basic", "res://assets/ui/skill_attack.png", Color(0.98, 0.76, 0.25, 0.72)],
+		["Q", "Torbellino", "whirlwind", "Q", "res://assets/ui/skill_q.png", Color(0.28, 0.78, 1.0, 0.72)],
+		["E", "Onda Hoja", "swordWave", "E", "res://assets/ui/skill_e.png", Color(0.76, 0.48, 1.0, 0.72)],
+		["R", "Lluvia Espadas", "ultimate", "R", "res://assets/ui/skill_r.png", Color(0.98, 0.44, 0.32, 0.78)],
+		["Shift", "Impulso", "dash", "SHIFT", "res://assets/ui/skill_shift.png", Color(0.28, 0.88, 0.62, 0.72)],
 	]
 
 	for s in defs:
@@ -519,12 +537,12 @@ func _build_bottom_skills() -> void:
 		var box := Panel.new()
 		box.custom_minimum_size = Vector2(106, 72)
 		box.clip_contents = true
-		box.add_theme_stylebox_override("panel", _panel_style(Color(0.05, 0.09, 0.20, 0.94), s[4], 12, 2))
+		box.add_theme_stylebox_override("panel", _panel_style(Color(0.05, 0.09, 0.20, 0.94), s[5], 12, 2))
 		wrap.add_child(box)
 
 		var icon := TextureRect.new()
-		if ResourceLoader.exists(str(s[3])):
-			icon.texture = load(str(s[3]))
+		if ResourceLoader.exists(str(s[4])):
+			icon.texture = load(str(s[4]))
 		icon.set_anchors_preset(Control.PRESET_FULL_RECT)
 		icon.offset_left = 4.0
 		icon.offset_right = -4.0
@@ -546,37 +564,41 @@ func _build_bottom_skills() -> void:
 		var key_badge := Panel.new()
 		key_badge.position = Vector2(4, 4)
 		key_badge.size = Vector2(badge_w, 19)
-		key_badge.add_theme_stylebox_override("panel", _panel_style(Color(0.06, 0.11, 0.24, 0.92), s[4], 5, 1))
+		key_badge.add_theme_stylebox_override("panel", _panel_style(Color(0.06, 0.11, 0.24, 0.92), s[5], 5, 1))
 		box.add_child(key_badge)
 		_label(key_badge, str(s[0]), Vector2.ZERO, key_badge.size, 10, Color(0.96, 0.98, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
 
 		var cdl := _label(box, "Listo", Vector2(0, 51), Vector2(106, 18), 11, Color(0.52, 1.0, 0.65), HORIZONTAL_ALIGNMENT_CENTER)
 
-		# Transparent clickable button overlay so clicking HUD slots triggers the skill!
+		# Transparent clickable button overlay so clicking HUD slots triggers the equipped skill!
 		var click_btn := Button.new()
 		click_btn.flat = true
 		click_btn.set_anchors_preset(Control.PRESET_FULL_RECT)
 		var sid := str(s[2])
+		var slot_key := str(s[3])
 		click_btn.pressed.connect(func():
 			if player == null:
 				return
-			if sid == "basic":
+			if slot_key == "basic":
 				player.perform_attack()
 			else:
-				player.perform_skill(sid)
+				player.perform_slot(slot_key)
 		)
 		box.add_child(click_btn)
 
 		var namel := _label(wrap, str(s[1]), Vector2.ZERO, Vector2(106, 16), 11, Color(0.86, 0.93, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
 		namel.custom_minimum_size = Vector2(106, 16)
 
-		if sid != "basic":
-			cd_nodes[sid] = {"panel": box, "cd": cdl, "icon": icon, "mask": cd_mask}
+		if slot_key != "basic":
+			# Slot-keyed entry: the cooldown curtain tracks whatever skill is equipped
+			cd_nodes[slot_key] = {"panel": box, "cd": cdl, "icon": icon, "mask": cd_mask, "skill": sid}
+			slot_nodes[slot_key] = {"name": namel, "default_name": str(s[1])}
+			slot_skill_ids[slot_key] = sid
 
 	_label(
 		bottom_skills_panel,
-		"Mover: WASD/Flechas  •  Atacar: Click/Espacio  •  Skills: Q E R Shift  •  Poción: H  •  Pausa: Esc",
-		Vector2(8, 101),
+		"Mover: WASD/Flechas  •  Atacar: Click/Espacio  •  Skills: Q E R Shift  •  Poción: H  •  Pausa: Esc  •  Evo: T  •  Skills: K",
+		Vector2(8, 119),
 		Vector2(588, 18),
 		10,
 		Color(0.72, 0.83, 0.96, 0.88),
@@ -739,12 +761,12 @@ func _layout_responsive() -> void:
 		log_panel_box.size = Vector2(304, 122)
 		log_panel_box.position = Vector2(16, H - 168.0)
 
-	# Bottom-center: Skills
+	# Bottom-center: Skills (+ energy bar)
 	if bottom_skills_panel:
 		var bs_w := 604.0
 		var bs_x := clampf((W - bs_w) * 0.5, 326.0, W - 258.0 - bs_w)
-		bottom_skills_panel.size = Vector2(bs_w, 122)
-		bottom_skills_panel.position = Vector2(bs_x, H - 132.0)
+		bottom_skills_panel.size = Vector2(bs_w, 140)
+		bottom_skills_panel.position = Vector2(bs_x, H - 150.0)
 
 	# Boss bar & Alert banner
 	if boss_panel:
@@ -1363,6 +1385,17 @@ func connect_player(p: Player) -> void:
 	if player.has_signal("floating_text_requested"):
 		player.floating_text_requested.connect(_spawn_floating_text)
 
+	# v3 permanent evolution & skill systems: live pills, slots & energy
+	if player.evolution_manager != null:
+		player.evolution_manager.evolution_xp_changed.connect(func(_x): _refresh_nav_pills())
+		player.evolution_manager.form_evolved.connect(func(_o, _f, _s): _refresh_nav_pills())
+	if player.skill_manager != null:
+		player.skill_manager.skill_points_changed.connect(func(_p): _refresh_nav_pills())
+		player.skill_manager.active_loadout_changed.connect(func(_l): _refresh_bottom_skill_slots())
+	_refresh_bottom_skill_slots()
+	_refresh_nav_pills()
+	_update_energy()
+
 	var gd := player._get_gamedata()
 	_on_hp(player.player_hp, player.player_max_hp)
 	_on_xp(player.current_xp, int(gd.get_xp_required(player.sword_level)), player.sword_level)
@@ -1572,6 +1605,7 @@ func _on_mejorar_pressed() -> void:
 func _process(delta: float) -> void:
 	_update_boss_bar()
 	_update_cooldowns()
+	_update_energy()
 	_update_floating_texts(delta)
 	if combo_timer > 0.0:
 		combo_timer -= delta
@@ -1618,10 +1652,11 @@ func _update_cooldowns() -> void:
 	var cds = player.get("cooldowns")
 	if cds == null:
 		return
-	for id in cd_nodes.keys():
+	for key in cd_nodes.keys():
+		var node: Dictionary = cd_nodes[key]
+		var id := str(node.get("skill", key))
 		var v := float(cds.get(id, 0.0))
 		var max_v := float(player.get_effective_cd_max(id)) if player.has_method("get_effective_cd_max") else float(player.cd_max.get(id, 4.0))
-		var node: Dictionary = cd_nodes[id]
 		var lbl: Label = node["cd"]
 		var box: Panel = node["panel"]
 		var mask: ColorRect = node["mask"]
@@ -1638,6 +1673,47 @@ func _update_cooldowns() -> void:
 			lbl.add_theme_color_override("font_color", Color(0.48, 1.0, 0.65, 0.98))
 			box.modulate = Color.WHITE
 			mask.size = Vector2(106.0, 0.0)
+
+func _update_energy() -> void:
+	if player == null or energy_bar == null:
+		return
+	var max_e: float = float(player.stats.get("max_energy", 100)) if player.get("stats") != null else 100.0
+	var cur_e: float = float(player.get("energy")) if player.get("energy") != null else max_e
+	energy_bar.max_value = maxf(1.0, max_e)
+	energy_bar.value = clampf(cur_e, 0.0, max_e)
+	if energy_text:
+		energy_text.text = "⚡ %d/%d" % [int(round(cur_e)), int(round(max_e))]
+
+## Re-binds the Q/E/R/SHIFT HUD slots to the player's equipped loadout (skill tree).
+func _refresh_bottom_skill_slots() -> void:
+	if player == null or player.skill_manager == null:
+		return
+	for slot in ["Q", "E", "R", "SHIFT"]:
+		var sn: Dictionary = slot_nodes.get(slot, {})
+		if sn.is_empty():
+			continue
+		var sid := str(player.skill_manager.get_equipped_skill_for_slot(slot))
+		if sid == "":
+			sid = str(slot_skill_ids.get(slot, ""))
+		slot_skill_ids[slot] = sid
+		if cd_nodes.has(slot):
+			cd_nodes[slot]["skill"] = sid
+		var sdef: Dictionary = player.skill_manager.catalog.get_skill(sid)
+		var lbl: Label = sn["name"]
+		if not sdef.is_empty():
+			lbl.text = str(sdef.get("name", sid))
+		else:
+			lbl.text = str(sn.get("default_name", sid))
+
+## Updates the [T]/[K] quick-access pills with live stage & skill point counts.
+func _refresh_nav_pills() -> void:
+	if player == null:
+		return
+	if evo_pill_btn != null and player.evolution_manager != null:
+		var em = player.evolution_manager
+		evo_pill_btn.text = "✦ Etapa %02d • %d Esencia [T]" % [em.get_current_stage(), int(em.evolution_xp)]
+	if skills_pill_btn != null and player.skill_manager != null:
+		skills_pill_btn.text = "❖ Pts: %d  [K]" % int(player.skill_manager.skill_points)
 
 # --- FLOATING 2D DAMAGE / HEAL NUMBERS ---
 func _spawn_floating_text(world_pos: Vector3, text: String, col: Color, is_big: bool) -> void:
