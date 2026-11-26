@@ -1,6 +1,6 @@
 extends Node
 
-## Autoload: datos globales del juego (evoluciones, monstruos, estado)
+## Autoload: datos globales del juego (evoluciones, monstruos, materiales, reliquias, consumibles)
 
 const SWORD_EVOLUTIONS := [
 	{
@@ -115,6 +115,7 @@ const MONSTER_DEFINITIONS := [
 		"min_wave": 1, "is_boss": false, "base_hp": 48, "base_damage": 7, "speed": 3.1,
 		"attack_range": 1.9, "attack_cooldown": 1.5, "xp_reward": 22, "gold_reward": 12,
 		"scale": 1.0, "primary_color": Color("#22c55e"), "accent_color": Color("#86efac"),
+		"drop_material": "gel_cristalino", "drop_chance": 0.65,
 		"model_path": "res://assets/models/monster_slime.obj"
 	},
 	{
@@ -122,6 +123,7 @@ const MONSTER_DEFINITIONS := [
 		"min_wave": 1, "is_boss": false, "base_hp": 85, "base_damage": 12, "speed": 4.1,
 		"attack_range": 2.2, "attack_cooldown": 1.25, "xp_reward": 34, "gold_reward": 20,
 		"scale": 1.05, "primary_color": Color("#65a30d"), "accent_color": Color("#a16207"),
+		"drop_material": "colmillo_trasgo", "drop_chance": 0.60,
 		"model_path": "res://assets/models/monster_goblin.obj"
 	},
 	{
@@ -129,6 +131,7 @@ const MONSTER_DEFINITIONS := [
 		"min_wave": 2, "is_boss": false, "base_hp": 145, "base_damage": 18, "speed": 3.6,
 		"attack_range": 2.4, "attack_cooldown": 1.3, "xp_reward": 52, "gold_reward": 32,
 		"scale": 1.15, "primary_color": Color("#e2e8f0"), "accent_color": Color("#38bdf8"),
+		"drop_material": "hueso_maldito", "drop_chance": 0.58,
 		"model_path": "res://assets/models/monster_skeleton.obj"
 	},
 	{
@@ -136,6 +139,7 @@ const MONSTER_DEFINITIONS := [
 		"min_wave": 3, "is_boss": false, "base_hp": 280, "base_damage": 28, "speed": 2.45,
 		"attack_range": 2.8, "attack_cooldown": 1.8, "xp_reward": 88, "gold_reward": 55,
 		"scale": 1.35, "primary_color": Color("#57534e"), "accent_color": Color("#ea580c"),
+		"drop_material": "nucleo_cobre", "drop_chance": 0.55,
 		"model_path": "res://assets/models/monster_copper_golem.obj"
 	},
 	{
@@ -143,6 +147,7 @@ const MONSTER_DEFINITIONS := [
 		"min_wave": 4, "is_boss": false, "base_hp": 460, "base_damage": 40, "speed": 3.8,
 		"attack_range": 2.7, "attack_cooldown": 1.2, "xp_reward": 135, "gold_reward": 85,
 		"scale": 1.3, "primary_color": Color("#15803d"), "accent_color": Color("#dc2626"),
+		"drop_material": "sangre_berserker", "drop_chance": 0.52,
 		"model_path": "res://assets/models/monster_orc_berserker.obj"
 	},
 	{
@@ -150,6 +155,7 @@ const MONSTER_DEFINITIONS := [
 		"min_wave": 5, "is_boss": false, "base_hp": 720, "base_damage": 56, "speed": 4.3,
 		"attack_range": 3.1, "attack_cooldown": 1.4, "xp_reward": 210, "gold_reward": 140,
 		"scale": 1.4, "primary_color": Color("#b91c1c"), "accent_color": Color("#f59e0b"),
+		"drop_material": "escama_escarlata", "drop_chance": 0.50,
 		"model_path": "res://assets/models/monster_crimson_drake.obj"
 	},
 	{
@@ -157,8 +163,135 @@ const MONSTER_DEFINITIONS := [
 		"min_wave": 3, "is_boss": true, "base_hp": 1450, "base_damage": 75, "speed": 3.3,
 		"attack_range": 3.8, "attack_cooldown": 1.6, "xp_reward": 550, "gold_reward": 400,
 		"scale": 1.85, "primary_color": Color("#18181b"), "accent_color": Color("#ef4444"),
+		"drop_material": "corazon_abismo", "drop_chance": 1.0,
 		"model_path": "res://assets/models/monster_demon_lord.obj"
 	},
+]
+
+const MATERIAL_DEFINITIONS := {
+	"gel_cristalino": {
+		"id": "gel_cristalino", "name": "Gel Cristalino", "rarity": "common",
+		"color": Color("#4ade80"), "source": "slime",
+		"desc": "Esencia gelatinosa pura del bosque."
+	},
+	"colmillo_trasgo": {
+		"id": "colmillo_trasgo", "name": "Colmillo Salvaje", "rarity": "common",
+		"color": Color("#a3e635"), "source": "goblin",
+		"desc": "Colmillo afilado de trasgo saqueador."
+	},
+	"hueso_maldito": {
+		"id": "hueso_maldito", "name": "Hueso Rúnico", "rarity": "uncommon",
+		"color": Color("#38bdf8"), "source": "skeleton",
+		"desc": "Fragmento óseo grabado con runas antiguas."
+	},
+	"nucleo_cobre": {
+		"id": "nucleo_cobre", "name": "Núcleo Mineral", "rarity": "uncommon",
+		"color": Color("#fb923c"), "source": "copper_golem",
+		"desc": "Corazón fundido de roca y cobre vivo."
+	},
+	"sangre_berserker": {
+		"id": "sangre_berserker", "name": "Esencia Berserker", "rarity": "rare",
+		"color": Color("#f87171"), "source": "orc_berserker",
+		"desc": "Furia concentrada de campeón de guerra."
+	},
+	"escama_escarlata": {
+		"id": "escama_escarlata", "name": "Escama de Draco", "rarity": "epic",
+		"color": Color("#f59e0b"), "source": "crimson_drake",
+		"desc": "Escama ígnea casi indestructible."
+	},
+	"corazon_abismo": {
+		"id": "corazon_abismo", "name": "Corazón de Malakor", "rarity": "legendary",
+		"color": Color("#e879f9"), "source": "demon_lord",
+		"desc": "Núcleo abisal arrebatado al Señor del Abismo."
+	},
+}
+
+const RELIC_DEFINITIONS := [
+	{
+		"id": "grip_oak", "slot": "grip", "slot_label": "Empuñadura",
+		"name": "Guardamano de Roble Vivo", "rarity": "common", "color": Color("#4ade80"),
+		"desc": "+35 Vida Máx • +10% EXP",
+		"stats": {"max_hp_bonus": 35, "xp_mult": 0.10},
+		"recipe_gold": 40, "recipe_mats": {"gel_cristalino": 3}
+	},
+	{
+		"id": "grip_crusader", "slot": "grip", "slot_label": "Empuñadura",
+		"name": "Empuñadura de Cruzado", "rarity": "rare", "color": Color("#60a5fa"),
+		"desc": "+15% Daño • +6% Prob. Crítico",
+		"stats": {"dmg_mult": 0.15, "crit_chance": 0.06},
+		"recipe_gold": 110, "recipe_mats": {"hueso_maldito": 2, "nucleo_cobre": 2}
+	},
+	{
+		"id": "grip_draconic", "slot": "grip", "slot_label": "Empuñadura",
+		"name": "Garras de Obsidiana", "rarity": "epic", "color": Color("#c084fc"),
+		"desc": "+26% Daño • +4 Vida/golpe",
+		"stats": {"dmg_mult": 0.26, "life_on_hit": 4},
+		"recipe_gold": 240, "recipe_mats": {"sangre_berserker": 2, "escama_escarlata": 2}
+	},
+	{
+		"id": "rune_wind", "slot": "rune", "slot_label": "Runa",
+		"name": "Runa del Céfiro", "rarity": "common", "color": Color("#38bdf8"),
+		"desc": "+14% Vel. Ataque • -10% Enfriamiento",
+		"stats": {"atk_speed_mult": 0.14, "cd_reduction": 0.10},
+		"recipe_gold": 45, "recipe_mats": {"colmillo_trasgo": 3}
+	},
+	{
+		"id": "rune_storm", "slot": "rune", "slot_label": "Runa",
+		"name": "Runa de Valquiria", "rarity": "rare", "color": Color("#60a5fa"),
+		"desc": "+10% Prob. Crítico • +25% Daño Crít.",
+		"stats": {"crit_chance": 0.10, "crit_mult": 0.25},
+		"recipe_gold": 130, "recipe_mats": {"hueso_maldito": 3, "nucleo_cobre": 1}
+	},
+	{
+		"id": "rune_void", "slot": "rune", "slot_label": "Runa",
+		"name": "Runa Astral del Vacío", "rarity": "epic", "color": Color("#c084fc"),
+		"desc": "+28% Daño • +12% Alcance • -15% CD",
+		"stats": {"dmg_mult": 0.28, "range_mult": 0.12, "cd_reduction": 0.15},
+		"recipe_gold": 320, "recipe_mats": {"escama_escarlata": 2, "corazon_abismo": 1}
+	},
+	{
+		"id": "relic_chalice", "slot": "relic", "slot_label": "Reliquia",
+		"name": "Cáliz Carmesí", "rarity": "rare", "color": Color("#f87171"),
+		"desc": "+5 Vida/golpe • +55 Vida Máx",
+		"stats": {"life_on_hit": 5, "max_hp_bonus": 55},
+		"recipe_gold": 150, "recipe_mats": {"nucleo_cobre": 2, "sangre_berserker": 2}
+	},
+	{
+		"id": "relic_magnet", "slot": "relic", "slot_label": "Reliquia",
+		"name": "Prisma Colector", "rarity": "rare", "color": Color("#fbbf24"),
+		"desc": "+25% EXP • +25% Oro",
+		"stats": {"xp_mult": 0.25, "gold_mult": 0.25},
+		"recipe_gold": 95, "recipe_mats": {"gel_cristalino": 2, "colmillo_trasgo": 2}
+	},
+	{
+		"id": "relic_malakor", "slot": "relic", "slot_label": "Reliquia",
+		"name": "Corona Abisal de Malakor", "rarity": "legendary", "color": Color("#f59e0b"),
+		"desc": "+38% Daño • +12% Crítico • +7 Vida/golpe",
+		"stats": {"dmg_mult": 0.38, "crit_chance": 0.12, "life_on_hit": 7},
+		"recipe_gold": 500, "recipe_mats": {"corazon_abismo": 2, "escama_escarlata": 2}
+	},
+]
+
+const CONSUMABLE_DEFINITIONS := {
+	"potion_hp": {
+		"id": "potion_hp", "name": "Poción de Brasa Vital",
+		"desc": "Restaura al instante 45% de tu Vida Máxima.",
+		"cost_gold": 35, "heal_ratio": 0.45, "color": Color("#fb7185")
+	},
+	"elixir_xp": {
+		"id": "elixir_xp", "name": "Elixir de Esencia Pura",
+		"desc": "Otorga +65% de la EXP requerida del nivel actual.",
+		"cost_gold": 75, "xp_ratio": 0.65, "color": Color("#38bdf8")
+	},
+}
+
+const UPGRADE_DEFINITIONS := [
+	{"key": "sharpness", "name": "Afilar Hoja", "short": "Afilar", "desc": "+18% Daño", "base_cost": 25},
+	{"key": "swiftness", "name": "Ligereza", "short": "Ligereza", "desc": "+8% Vel. Ataque", "base_cost": 30},
+	{"key": "criticalMastery", "name": "Maestría Crítica", "short": "Crítico", "desc": "+4% Crit / +15% Mult", "base_cost": 35},
+	{"key": "vampirism", "name": "Runa Vampírica", "short": "Vampiro", "desc": "+3 Vida/golpe", "base_cost": 40},
+	{"key": "soulMagnet", "name": "Imán de Almas", "short": "Almas", "desc": "+15% EXP / +12% Oro", "base_cost": 30},
+	{"key": "bladeSize", "name": "Hoja Colosal", "short": "Colosal", "desc": "+6% Alcance y Escala", "base_cost": 45},
 ]
 
 func get_sword_for_level(level: int) -> Dictionary:
@@ -187,3 +320,18 @@ func get_eligible_monsters(wave: int, boss_only: bool = false) -> Array:
 					return [m]
 		return [MONSTER_DEFINITIONS[0]]
 	return pool
+
+func get_relic_by_id(relic_id: String) -> Dictionary:
+	for r in RELIC_DEFINITIONS:
+		if str(r["id"]) == relic_id:
+			return r
+	return {}
+
+func get_material_by_id(mat_id: String) -> Dictionary:
+	return MATERIAL_DEFINITIONS.get(mat_id, {})
+
+func get_drop_material_for_monster(m_id: String) -> String:
+	for k in MATERIAL_DEFINITIONS.keys():
+		if str(MATERIAL_DEFINITIONS[k].get("source", "")) == m_id:
+			return str(k)
+	return "gel_cristalino"
