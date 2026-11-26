@@ -650,9 +650,9 @@
       "aura_color": "#fde047",
       "slash_color": "#f59e0b",
       "special_effect": "solar_burn",
-      "model_path": "res://assets/models/sword_gold_nv20.obj",
-      "model_status": "extensible_blueprint_pending_3d",
-      "catalog_status": "extensible_framework_node",
+      "model_path": "res://assets/models/swords/sunbark_vow/sword_04_sunbark_vow.glb",
+      "model_status": "verified_stage04_glb",
+      "catalog_status": "canon_approved_stage04",
       "parent_forms": [
         "awakening_amber_sanctuary_blade",
         "awakening_ironwood_storm_edge"
@@ -715,9 +715,9 @@
       "aura_color": "#e11d48",
       "slash_color": "#fb7185",
       "special_effect": "void_leech",
-      "model_path": "res://assets/models/sword_obsidian_nv30.obj",
-      "model_status": "extensible_blueprint_pending_3d",
-      "catalog_status": "extensible_framework_node",
+      "model_path": "res://assets/models/swords/thornheart_hex/sword_04_thornheart_hex.glb",
+      "model_status": "verified_stage04_glb",
+      "catalog_status": "canon_approved_stage04",
       "parent_forms": [
         "awakening_bloodsap_bramble_blade"
       ],
@@ -779,9 +779,9 @@
       "aura_color": "#fb923c",
       "slash_color": "#38bdf8",
       "special_effect": "lightning",
-      "model_path": "res://assets/models/sword_copper_nv5.obj",
-      "model_status": "extensible_blueprint_pending_3d",
-      "catalog_status": "extensible_framework_node",
+      "model_path": "res://assets/models/swords/fulgurite_crest/sword_04_fulgurite_crest.glb",
+      "model_status": "verified_stage04_glb",
+      "catalog_status": "canon_approved_stage04",
       "parent_forms": [
         "awakening_ironwood_storm_edge",
         "awakening_spirit_willow_saber",
@@ -845,9 +845,9 @@
       "aura_color": "#34d399",
       "slash_color": "#6ee7b7",
       "special_effect": "frost_crit",
-      "model_path": "res://assets/models/sword_silver_nv15.obj",
-      "model_status": "extensible_blueprint_pending_3d",
-      "catalog_status": "extensible_framework_node",
+      "model_path": "res://assets/models/swords/jade_anima/sword_04_jade_anima.glb",
+      "model_status": "verified_stage04_glb",
+      "catalog_status": "canon_approved_stage04",
       "parent_forms": [
         "awakening_amber_sanctuary_blade",
         "awakening_spirit_willow_saber"
@@ -910,9 +910,9 @@
       "aura_color": "#c084fc",
       "slash_color": "#e879f9",
       "special_effect": "bleed",
-      "model_path": "res://assets/models/sword_crystal_nv25.obj",
-      "model_status": "extensible_blueprint_pending_3d",
-      "catalog_status": "extensible_framework_node",
+      "model_path": "res://assets/models/swords/runebark_codex/sword_04_runebark_codex.glb",
+      "model_status": "verified_stage04_glb",
+      "catalog_status": "canon_approved_stage04",
       "parent_forms": [
         "awakening_amber_sanctuary_blade",
         "awakening_ironwood_storm_edge",

@@ -339,6 +339,23 @@ STAGE02_GLB = {
     "wood_charred_ash_thorn": "res://assets/models/swords/ash_thorn/sword_02_ash_thorn.glb",
 }
 
+# Bespoke Stage-03 GLBs verified in Godot 4.4 (Studio Lexair approved production batch)
+STAGE03_GLB = {
+    "awakening_amber_sanctuary_blade": "res://assets/models/swords/amber_sanctuary/sword_03_amber_sanctuary.glb",
+    "awakening_ironwood_storm_edge": "res://assets/models/swords/ironwood_storm/sword_03_ironwood_storm.glb",
+    "awakening_spirit_willow_saber": "res://assets/models/swords/spirit_willow/sword_03_spirit_willow.glb",
+    "awakening_bloodsap_bramble_blade": "res://assets/models/swords/bloodsap_bramble/sword_03_bramble_blade.glb",
+}
+
+# Bespoke Stage-04 GLBs verified in Godot 4.4 (Studio Lexair approved production batch)
+STAGE04_GLB = {
+    "awakening_sunbark_vow_greatsword": "res://assets/models/swords/sunbark_vow/sword_04_sunbark_vow.glb",
+    "awakening_thornheart_hex_blade": "res://assets/models/swords/thornheart_hex/sword_04_thornheart_hex.glb",
+    "awakening_fulgurite_crest_sword": "res://assets/models/swords/fulgurite_crest/sword_04_fulgurite_crest.glb",
+    "awakening_jade_anima_katana": "res://assets/models/swords/jade_anima/sword_04_jade_anima.glb",
+    "awakening_runebark_codex_blade": "res://assets/models/swords/runebark_codex/sword_04_runebark_codex.glb",
+}
+
 STAGE_TITLES = {
     # Era I: Despertar (01-04)
     1: [
@@ -603,9 +620,9 @@ for st, entries in STAGE_TITLES.items():
             "aura_color": lmeta["aura_color"],
             "slash_color": lmeta["slash_color"],
             "special_effect": lmeta["special_effect"],
-            "model_path": STAGE02_GLB.get(fid, "res://assets/models/swords/wood_ancestral/sword_01_wood_ancestral.glb" if is_pilot else lmeta["legacy_model"]),
-            "model_status": ("verified_stage02_glb" if fid in STAGE02_GLB else ("verified_pilot_glb" if is_pilot else "extensible_blueprint_pending_3d")),
-            "catalog_status": ("canon_approved_stage02" if fid in STAGE02_GLB else ("canon_approved_pilot" if is_pilot else "extensible_framework_node")),
+            "model_path": (STAGE04_GLB[fid] if fid in STAGE04_GLB else STAGE03_GLB.get(fid, STAGE02_GLB.get(fid, "res://assets/models/swords/wood_ancestral/sword_01_wood_ancestral.glb" if is_pilot else lmeta["legacy_model"]))),
+            "model_status": ("verified_stage04_glb" if fid in STAGE04_GLB else ("verified_stage03_glb" if fid in STAGE03_GLB else ("verified_stage02_glb" if fid in STAGE02_GLB else ("verified_pilot_glb" if is_pilot else "extensible_blueprint_pending_3d")))),
+            "catalog_status": ("canon_approved_stage04" if fid in STAGE04_GLB else ("canon_approved_stage03" if fid in STAGE03_GLB else ("canon_approved_stage02" if fid in STAGE02_GLB else ("canon_approved_pilot" if is_pilot else "extensible_framework_node")))),
             "parent_forms": [],
             "next_forms": [],
         }

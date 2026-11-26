@@ -15,7 +15,7 @@ IND = os.path.join(BASE, "individual")
 OUT = os.path.join(BASE, "sword_catalog_sheet.png")
 
 CELL_W, CELL_H = 560, 660
-COLS, ROWS = 3, 5
+COLS, ROWS = 4, 5
 PAD = 24
 TITLE_H = 118
 FOOT_H = 74
@@ -46,6 +46,11 @@ CARDS = [
     ("sword_03_ironwood_storm.png", "Filo de Palo Ferreo y Trueno", "Etapa 03 - Rama Elemental (anime tormenta)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_03_spirit_willow.png", "Sable de Sauce Espiritual", "Etapa 03 - Rama Spiritual (anime etereo)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_03_bramble_blade.png", "Hoja de Zarza Sanguina", "Etapa 03 - Rama Cursed (anime zarza)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_04_sunbark_vow.png", "Mandoble del Voto Heliofilo", "Etapa 04 - Rama Blessed (anime sol naciente)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_04_thornheart_hex.png", "Hoja Maldita Corazon de Espina", "Etapa 04 - Rama Cursed (anime hexagonal)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_04_fulgurite_crest.png", "Espada Cresta de Fulgurita", "Etapa 04 - Rama Elemental (anime vid relampago)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_04_jade_anima.png", "Katana Anima de Jade", "Etapa 04 - Rama Spiritual (anime katana)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_04_runebark_codex.png", "Espada Codice de Corteza Runica", "Etapa 04 - Rama Arcane (anime grimorio)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_copper_nv5.png", "Espada de Cobre Forjado (legacy)", "Fase legacy - Nv.5 (referencia antigua)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
     ("sword_iron_nv10.png", "Mandoble de Hierro Templado", "Fase legacy - Nv.10 (Equiv. Etapa 03)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
     ("sword_silver_nv15.png", "Hoja de Plata Runica", "Fase legacy - Nv.15 (Equiv. Etapa 05)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
@@ -72,7 +77,7 @@ def main():
     f_foot = font(13)
 
     draw_center(d, W / 2, 26, "FORJA DE ALMAS 3D - Catalogo 3D de Espadas", f_title, GOLD)
-    draw_center(d, W / 2, 74, "Studio Lexair - Renders neutros Cycles (key/fill/rim, sin glow ni particulas) - 15 modelos: 8 GLB bespoke verificados (Pilot + Etapa 02 completa + Etapa 03 completa) + 7 siluetas OBJ legacy provisionales", f_sub, SUB)
+    draw_center(d, W / 2, 74, "Studio Lexair - Renders neutros Cycles (key/fill/rim, sin glow ni particulas) - 20 modelos: 13 GLB bespoke verificados (Pilot + Etapas 02, 03 y 04 completas) + 7 siluetas OBJ legacy provisionales", f_sub, SUB)
 
     for i, (fname, name, phase, status, border) in enumerate(CARDS):
         col, row = i % COLS, i // COLS
@@ -98,8 +103,8 @@ def main():
     ly = TITLE_H + ROWS * (CELL_H + PAD) + PAD // 2 + 6
     d.rounded_rectangle([PAD, ly + 4, PAD + 18, ly + 22], radius=4, outline=CARD_BORDER_OK, width=2)
     d.text((PAD + 28, ly + 5), "GLB bespoke modelado + PBR + Godot verificado", font=f_legend, fill=TXT)
-    d.rounded_rectangle([PAD + 420, ly + 4, PAD + 438, ly + 22], radius=4, outline=CARD_BORDER_TMP, width=2)
-    d.text((PAD + 448, ly + 5), "Silueta OBJ del proyecto original (reemplazo bespoke pendiente de aprobacion)", font=f_legend, fill=TXT)
+    d.rounded_rectangle([PAD + 560, ly + 4, PAD + 578, ly + 22], radius=4, outline=CARD_BORDER_TMP, width=2)
+    d.text((PAD + 588, ly + 5), "Silueta OBJ del proyecto original (reemplazo bespoke pendiente de aprobacion)", font=f_legend, fill=TXT)
 
     draw_center(d, W / 2, H - FOOT_H + 18, "Regla Studio Lexair: cada espada final tendra geometria propia unica, UVs limpias y 5 mapas PBR - nada de meshes procedurales ni recolores", f_foot, SUB)
     draw_center(d, W / 2, H - FOOT_H + 40, "Las 24 etapas / 118 formas del sistema de evolucion reutilizan estas siluetas como provisional hasta su aprobacion individual", f_foot, SUB)
