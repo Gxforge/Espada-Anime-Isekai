@@ -15,7 +15,7 @@ IND = os.path.join(BASE, "individual")
 OUT = os.path.join(BASE, "sword_catalog_sheet.png")
 
 CELL_W, CELL_H = 560, 660
-COLS, ROWS = 5, 5
+COLS, ROWS = 6, 5
 PAD = 24
 TITLE_H = 118
 FOOT_H = 74
@@ -56,6 +56,11 @@ CARDS = [
     ("sword_05_copper_tempest.png", "Espada Cobriza de Tempestad", "Etapa 05 - Rama Elemental (anime ciclon cobre)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_05_silver_anima.png", "Sable de Plata Anima", "Etapa 05 - Rama Spiritual (anime sable plata)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_05_crystal_cipher.png", "Espada Cifrada de Cristal", "Etapa 05 - Rama Arcane (anime prisma cifrado)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_06_auric_bastion.png", "Claymore Bastion Aurico", "Etapa 06 - Rama Blessed (anime fortaleza)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_06_crimson_reaver.png", "Hendidora Segadora Carmesi", "Etapa 06 - Rama Cursed (anime segador)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_06_glacier_fang.png", "Espada Larga Colmillo de Glaciar", "Etapa 06 - Rama Elemental (anime glaciar)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_06_mistwalker_bamboo.png", "Katana Caminante de la Niebla", "Etapa 06 - Rama Spiritual (anime bambu)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_06_astrolabe_ring.png", "Hoja Anillo de Astrolabio", "Etapa 06 - Rama Arcane (anime astrolabio)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_copper_nv5.png", "Espada de Cobre Forjado (legacy)", "Fase legacy - Nv.5 (referencia antigua)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
     ("sword_iron_nv10.png", "Mandoble de Hierro Templado", "Fase legacy - Nv.10 (Equiv. Etapa 03)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
     ("sword_silver_nv15.png", "Hoja de Plata Runica", "Fase legacy - Nv.15 (Equiv. Etapa 05)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
@@ -82,7 +87,7 @@ def main():
     f_foot = font(13)
 
     draw_center(d, W / 2, 26, "FORJA DE ALMAS 3D - Catalogo 3D de Espadas", f_title, GOLD)
-    draw_center(d, W / 2, 74, "Studio Lexair - Renders neutros Cycles (key/fill/rim, sin glow ni particulas) - 25 modelos: 18 GLB bespoke verificados (Pilot + Etapas 02-05 completas) + 7 siluetas OBJ legacy provisionales", f_sub, SUB)
+    draw_center(d, W / 2, 74, "Studio Lexair - Renders neutros Cycles (key/fill/rim, sin glow ni particulas) - 30 modelos: 23 GLB bespoke verificados (Pilot + Etapas 02-06 completas) + 7 siluetas OBJ legacy provisionales", f_sub, SUB)
 
     for i, (fname, name, phase, status, border) in enumerate(CARDS):
         col, row = i % COLS, i // COLS
