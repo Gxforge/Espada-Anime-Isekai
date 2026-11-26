@@ -5,17 +5,17 @@ Compone los renders individuales de art_pipeline/sword_catalog_renders/individua
 en una unica lamina con titulos, fases y estado de produccion por espada.
 
 Uso: python3 build_catalog_sheet.py
-Salida: art_pipeline/sword_catalog_renders/sword_catalog_sheet_3x3.png
+Salida: art_pipeline/sword_catalog_renders/sword_catalog_sheet.png
 """
 import os
 from PIL import Image, ImageDraw, ImageFont
 
 BASE = "/home/user/Espada-Anime-Isekai/art_pipeline/sword_catalog_renders"
 IND = os.path.join(BASE, "individual")
-OUT = os.path.join(BASE, "sword_catalog_sheet_3x3.png")
+OUT = os.path.join(BASE, "sword_catalog_sheet.png")
 
 CELL_W, CELL_H = 560, 660
-COLS, ROWS = 3, 3
+COLS, ROWS = 3, 4
 PAD = 24
 TITLE_H = 118
 FOOT_H = 74
@@ -39,7 +39,10 @@ def font(size, bold=False):
 # (fichero, titulo, fase/etiqueta, estado, border)
 CARDS = [
     ("sword_wood_ancestral_pilot_glb.png", "Espada de Madera Ancestral", "Pilot #01 - Etapa 01", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
-    ("sword_copper_nv5.png", "Espada de Cobre Forjado", "Fase legacy - Nv.5 (Equiv. Etapa 02)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
+    ("sword_02_verdant_bough.png", "Hoja de Brote Viviente", "Etapa 02 - Rama Origin (anime organico)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_02_copper_root.png", "Espada de Raiz Cobriza", "Etapa 02 - Rama Elemental (anime electrico)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_02_ash_thorn.png", "Espada de Espino Carbonizado", "Etapa 02 - Rama Maldita (anime brasas)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_copper_nv5.png", "Espada de Cobre Forjado (legacy)", "Fase legacy - Nv.5 (referencia antigua)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
     ("sword_iron_nv10.png", "Mandoble de Hierro Templado", "Fase legacy - Nv.10 (Equiv. Etapa 03)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
     ("sword_silver_nv15.png", "Hoja de Plata Runica", "Fase legacy - Nv.15 (Equiv. Etapa 05)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
     ("sword_gold_nv20.png", "Claymore de Oro Solar Imperial", "Fase legacy - Nv.20 (Equiv. Etapa 06)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
@@ -65,7 +68,7 @@ def main():
     f_foot = font(13)
 
     draw_center(d, W / 2, 26, "FORJA DE ALMAS 3D - Catalogo 3D de Espadas", f_title, GOLD)
-    draw_center(d, W / 2, 74, "Studio Lexair - Renders neutros Cycles (key/fill/rim, sin glow ni particulas) - 8 modelos: 1 GLB bespoke + 7 siluetas OBJ legacy (la madera Nv.1 OBJ fue reemplazada por el Pilot GLB)", f_sub, SUB)
+    draw_center(d, W / 2, 74, "Studio Lexair - Renders neutros Cycles (key/fill/rim, sin glow ni particulas) - 11 modelos: 4 GLB bespoke verificados (Pilot + Etapa 02 completa) + 7 siluetas OBJ legacy provisionales", f_sub, SUB)
 
     for i, (fname, name, phase, status, border) in enumerate(CARDS):
         col, row = i % COLS, i // COLS

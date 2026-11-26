@@ -332,6 +332,13 @@ assert sum(1 for s in skills_list if s["type"] == "passive") == 36
 #   PLUS Hybrid/Secret forms at milestone stages (08, 12, 16, 20, 24), and EVERY node at stage `s < 24` offers
 #   between **2 and 5 permanent evolution choices** (`next_forms` count in `[2..5]`)!
 
+# Bespoke Stage-02 GLBs verified in Godot 4.4 (Studio Lexair approved production batch)
+STAGE02_GLB = {
+    "wood_verdant_living_bough": "res://assets/models/swords/verdant_bough/sword_02_verdant_bough.glb",
+    "wood_mineral_copper_root": "res://assets/models/swords/copper_root/sword_02_copper_root.glb",
+    "wood_charred_ash_thorn": "res://assets/models/swords/ash_thorn/sword_02_ash_thorn.glb",
+}
+
 STAGE_TITLES = {
     # Era I: Despertar (01-04)
     1: [
@@ -596,9 +603,9 @@ for st, entries in STAGE_TITLES.items():
             "aura_color": lmeta["aura_color"],
             "slash_color": lmeta["slash_color"],
             "special_effect": lmeta["special_effect"],
-            "model_path": "res://assets/models/swords/wood_ancestral/sword_01_wood_ancestral.glb" if is_pilot else lmeta["legacy_model"],
-            "model_status": "verified_pilot_glb" if is_pilot else "extensible_blueprint_pending_3d",
-            "catalog_status": "canon_approved_pilot" if is_pilot else "extensible_framework_node",
+            "model_path": STAGE02_GLB.get(fid, "res://assets/models/swords/wood_ancestral/sword_01_wood_ancestral.glb" if is_pilot else lmeta["legacy_model"]),
+            "model_status": ("verified_stage02_glb" if fid in STAGE02_GLB else ("verified_pilot_glb" if is_pilot else "extensible_blueprint_pending_3d")),
+            "catalog_status": ("canon_approved_stage02" if fid in STAGE02_GLB else ("canon_approved_pilot" if is_pilot else "extensible_framework_node")),
             "parent_forms": [],
             "next_forms": [],
         }

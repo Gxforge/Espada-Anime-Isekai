@@ -197,9 +197,9 @@
       "aura_color": "#86efac",
       "slash_color": "#d4a373",
       "special_effect": "none",
-      "model_path": "res://assets/models/sword_wood_nv1.obj",
-      "model_status": "extensible_blueprint_pending_3d",
-      "catalog_status": "extensible_framework_node",
+      "model_path": "res://assets/models/swords/verdant_bough/sword_02_verdant_bough.glb",
+      "model_status": "verified_stage02_glb",
+      "catalog_status": "canon_approved_stage02",
       "parent_forms": [
         "wood_origin_ancestral_blade"
       ],
@@ -261,9 +261,9 @@
       "aura_color": "#fb923c",
       "slash_color": "#38bdf8",
       "special_effect": "lightning",
-      "model_path": "res://assets/models/sword_copper_nv5.obj",
-      "model_status": "extensible_blueprint_pending_3d",
-      "catalog_status": "extensible_framework_node",
+      "model_path": "res://assets/models/swords/copper_root/sword_02_copper_root.glb",
+      "model_status": "verified_stage02_glb",
+      "catalog_status": "canon_approved_stage02",
       "parent_forms": [
         "wood_origin_ancestral_blade"
       ],
@@ -325,9 +325,9 @@
       "aura_color": "#e11d48",
       "slash_color": "#fb7185",
       "special_effect": "void_leech",
-      "model_path": "res://assets/models/sword_obsidian_nv30.obj",
-      "model_status": "extensible_blueprint_pending_3d",
-      "catalog_status": "extensible_framework_node",
+      "model_path": "res://assets/models/swords/ash_thorn/sword_02_ash_thorn.glb",
+      "model_status": "verified_stage02_glb",
+      "catalog_status": "canon_approved_stage02",
       "parent_forms": [
         "wood_origin_ancestral_blade"
       ],
