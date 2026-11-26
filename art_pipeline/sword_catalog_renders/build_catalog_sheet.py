@@ -15,7 +15,7 @@ IND = os.path.join(BASE, "individual")
 OUT = os.path.join(BASE, "sword_catalog_sheet.png")
 
 CELL_W, CELL_H = 560, 660
-COLS, ROWS = 7, 5
+COLS, ROWS = 9, 5
 PAD = 24
 TITLE_H = 118
 FOOT_H = 74
@@ -66,6 +66,12 @@ CARDS = [
     ("sword_07_magma_vein.png", "Espada Ancha Vena de Magma", "Etapa 07 - Rama Elemental (anime magma)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_07_moonlit_lotus.png", "Hoja Loto de Plenilunio", "Etapa 07 - Rama Spiritual (anime loto)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_07_aether_conduit.png", "Estoque Conducto de Eter", "Etapa 07 - Rama Arcane (anime eter)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_08_radiant_covenant.png", "Mandoble de la Alianza Radiante", "Etapa 08 - Rama Blessed (anime alianza)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_08_bloodmoon_pact.png", "Mandoble del Pacto Luna Sangrienta", "Etapa 08 - Rama Cursed (anime luna roja)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_08_thunderlord_fulgur.png", "Filo Fulgur del Senor del Trueno", "Etapa 08 - Rama Elemental (anime tridente)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_08_ancestral_chorus.png", "Espada Coro de los Ancestros", "Etapa 08 - Rama Spiritual (anime coro)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_08_grimoire_monolith.png", "Mandoble Monolito de Grimorio", "Etapa 08 - Rama Arcane (anime monolito)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_08_twilight_covenant.png", "Espada Hibrida del Pacto Crepuscular", "Etapa 08 - HIBRIDA SECRETA luz/sombra", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_copper_nv5.png", "Espada de Cobre Forjado (legacy)", "Fase legacy - Nv.5 (referencia antigua)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
     ("sword_iron_nv10.png", "Mandoble de Hierro Templado", "Fase legacy - Nv.10 (Equiv. Etapa 03)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
     ("sword_silver_nv15.png", "Hoja de Plata Runica", "Fase legacy - Nv.15 (Equiv. Etapa 05)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
@@ -92,7 +98,7 @@ def main():
     f_foot = font(13)
 
     draw_center(d, W / 2, 26, "FORJA DE ALMAS 3D - Catalogo 3D de Espadas", f_title, GOLD)
-    draw_center(d, W / 2, 74, "Studio Lexair - Renders neutros Cycles (key/fill/rim, sin glow ni particulas) - 35 modelos: 28 GLB bespoke verificados (Pilot + Etapas 02-07 completas) + 7 siluetas OBJ legacy provisionales", f_sub, SUB)
+    draw_center(d, W / 2, 74, "Studio Lexair - Renders neutros Cycles (key/fill/rim, sin glow ni particulas) - 43 modelos: 36 GLB bespoke verificados (Pilot + Etapas 02-08, incl. 1a hibrida secreta) + 7 siluetas OBJ legacy provisionales", f_sub, SUB)
 
     for i, (fname, name, phase, status, border) in enumerate(CARDS):
         col, row = i % COLS, i // COLS
