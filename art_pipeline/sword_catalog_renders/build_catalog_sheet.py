@@ -15,7 +15,7 @@ IND = os.path.join(BASE, "individual")
 OUT = os.path.join(BASE, "sword_catalog_sheet.png")
 
 CELL_W, CELL_H = 560, 660
-COLS, ROWS = 3, 4
+COLS, ROWS = 3, 5
 PAD = 24
 TITLE_H = 118
 FOOT_H = 74
@@ -42,6 +42,10 @@ CARDS = [
     ("sword_02_verdant_bough.png", "Hoja de Brote Viviente", "Etapa 02 - Rama Origin (anime organico)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_02_copper_root.png", "Espada de Raiz Cobriza", "Etapa 02 - Rama Elemental (anime electrico)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_02_ash_thorn.png", "Espada de Espino Carbonizado", "Etapa 02 - Rama Maldita (anime brasas)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_03_amber_sanctuary.png", "Hoja de Ambar de Santuario", "Etapa 03 - Rama Blessed (anime catedral)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_03_ironwood_storm.png", "Filo de Palo Ferreo y Trueno", "Etapa 03 - Rama Elemental (anime tormenta)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_03_spirit_willow.png", "Sable de Sauce Espiritual", "Etapa 03 - Rama Spiritual (anime etereo)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_03_bramble_blade.png", "Hoja de Zarza Sanguina", "Etapa 03 - Rama Cursed (anime zarza)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_copper_nv5.png", "Espada de Cobre Forjado (legacy)", "Fase legacy - Nv.5 (referencia antigua)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
     ("sword_iron_nv10.png", "Mandoble de Hierro Templado", "Fase legacy - Nv.10 (Equiv. Etapa 03)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
     ("sword_silver_nv15.png", "Hoja de Plata Runica", "Fase legacy - Nv.15 (Equiv. Etapa 05)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
@@ -68,7 +72,7 @@ def main():
     f_foot = font(13)
 
     draw_center(d, W / 2, 26, "FORJA DE ALMAS 3D - Catalogo 3D de Espadas", f_title, GOLD)
-    draw_center(d, W / 2, 74, "Studio Lexair - Renders neutros Cycles (key/fill/rim, sin glow ni particulas) - 11 modelos: 4 GLB bespoke verificados (Pilot + Etapa 02 completa) + 7 siluetas OBJ legacy provisionales", f_sub, SUB)
+    draw_center(d, W / 2, 74, "Studio Lexair - Renders neutros Cycles (key/fill/rim, sin glow ni particulas) - 15 modelos: 8 GLB bespoke verificados (Pilot + Etapa 02 completa + Etapa 03 completa) + 7 siluetas OBJ legacy provisionales", f_sub, SUB)
 
     for i, (fname, name, phase, status, border) in enumerate(CARDS):
         col, row = i % COLS, i // COLS

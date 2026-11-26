@@ -389,9 +389,9 @@
       "aura_color": "#fde047",
       "slash_color": "#f59e0b",
       "special_effect": "solar_burn",
-      "model_path": "res://assets/models/sword_gold_nv20.obj",
-      "model_status": "extensible_blueprint_pending_3d",
-      "catalog_status": "extensible_framework_node",
+      "model_path": "res://assets/models/swords/amber_sanctuary/sword_03_amber_sanctuary.glb",
+      "model_status": "verified_stage03_glb",
+      "catalog_status": "canon_approved_stage03",
       "parent_forms": [
         "wood_verdant_living_bough",
         "wood_mineral_copper_root"
@@ -454,9 +454,9 @@
       "aura_color": "#fb923c",
       "slash_color": "#38bdf8",
       "special_effect": "lightning",
-      "model_path": "res://assets/models/sword_copper_nv5.obj",
-      "model_status": "extensible_blueprint_pending_3d",
-      "catalog_status": "extensible_framework_node",
+      "model_path": "res://assets/models/swords/ironwood_storm/sword_03_ironwood_storm.glb",
+      "model_status": "verified_stage03_glb",
+      "catalog_status": "canon_approved_stage03",
       "parent_forms": [
         "wood_verdant_living_bough",
         "wood_mineral_copper_root",
@@ -520,9 +520,9 @@
       "aura_color": "#34d399",
       "slash_color": "#6ee7b7",
       "special_effect": "frost_crit",
-      "model_path": "res://assets/models/sword_silver_nv15.obj",
-      "model_status": "extensible_blueprint_pending_3d",
-      "catalog_status": "extensible_framework_node",
+      "model_path": "res://assets/models/swords/spirit_willow/sword_03_spirit_willow.glb",
+      "model_status": "verified_stage03_glb",
+      "catalog_status": "canon_approved_stage03",
       "parent_forms": [
         "wood_verdant_living_bough",
         "wood_charred_ash_thorn"
@@ -585,9 +585,9 @@
       "aura_color": "#e11d48",
       "slash_color": "#fb7185",
       "special_effect": "void_leech",
-      "model_path": "res://assets/models/sword_obsidian_nv30.obj",
-      "model_status": "extensible_blueprint_pending_3d",
-      "catalog_status": "extensible_framework_node",
+      "model_path": "res://assets/models/swords/bloodsap_bramble/sword_03_bramble_blade.glb",
+      "model_status": "verified_stage03_glb",
+      "catalog_status": "canon_approved_stage03",
       "parent_forms": [
         "wood_mineral_copper_root",
         "wood_charred_ash_thorn"
