@@ -54,3 +54,10 @@
 - Malakor/boss: guardia anti-duplicado, recompensa extra 1.5x, log de derrota, VFX de derrota.
 - Audio: SFX WAV procedurales básicos (hit/swing/levelup/boss/ui) y cableado en Player/Monster.
 - HUD: fixes 1366 (overflow top-left, iconos recortados en slots, reagrupado top).
+
+## 2026-11-24 (entrega)
+- Boot/logo/loading/main menu con fondo y "Presiona cualquier tecla".
+- Persistencia de settings (calidad/audio) en SaveSystem.
+- Exports locales verificados: Windows `.exe` y Linux `.x86_64`.
+- CI GitHub strict en verde tras fix de shell bash.
+- QA overlays 1366 y capturas settings en 1280/1600/1920.

@@ -124,3 +124,19 @@ See `docs/KNOWN_ISSUES.md`.
 | Malakor boss encounter | PARTIAL | telegraph/slam/charge/recover, recompensa/VFX derrota, guardia duplicado; falta secuencia completa/cinemática |
 | Audio | PARTIAL | SFX WAV básicos en `assets/audio`, cableado; falta música/mezcla/config avanzada |
 | HUD 1366/responsive | PARTIAL | fixes overflow/slots/top; smoke 4 resoluciones; falta QA interactiva completa |
+
+
+## Actualización 2026-11-24 (entrega/export/CI/menu)
+| Área | Estado | Evidencia |
+|---|---|---|
+| Boot/Logo/Loading/MainMenu | PASS (básico) | `scenes/Boot.tscn`, `LoadingScreen.tscn`, `MainMenu.tscn`, `assets/ui/logo.png`, `menu_bg.png`, `title.png`; capturas `videos/boot_screen.png`, `videos/mainmenu_screen.png` |
+| Windows export | PASS (build local verificado) | `godot_project/build/windows/ForjaDeAlmas3D.exe` (95M), zip `videos/ForjaDeAlmas3D_Windows.zip` |
+| Linux export | PASS (build local verificado) | `godot_project/build/linux/ForjaDeAlmas3D.x86_64` (69M) |
+| CI strict GitHub | PASS (últimos runs) | runs `d1dce8d` y `087c974` en verde; fix shell bash en workflow |
+| Settings persistencia | PASS (básico) | `SaveSystem.gd` settings quality/audio_muted; HUD aplica/carga |
+| QA overlays 1366 | PASS (smoke) | `videos/hud_1366_pause.png`, `hud_1366_inventory.png`, `hud_1366_settings.png`, `hud_1366_stats.png` |
+| QA overlays otras resoluciones | PARTIAL | `videos/hud_1280x720_settings.png`, `hud_1600x900_settings.png`, `hud_1920x1080_settings.png` |
+| Performance benchmark formal | NOT TESTED | entorno headless llvmpipe; sin medición FPS representativa |
+| Inventario/loot completo RPG | PARTIAL | panel inventario/stats funcional básico; falta sistema profundo de ítems/materiales |
+| Audio completo/música | PARTIAL | SFX básicos WAV; sin música/mezcla avanzada |
+| HUD 1:1 referencia | PARTIAL | mejorado y responsive básico; falta arte/iconografía final exacta |
