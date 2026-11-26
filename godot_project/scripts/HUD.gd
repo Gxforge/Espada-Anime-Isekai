@@ -71,6 +71,15 @@ var pause_panel: Panel
 var settings_panel: Panel
 var inventory_panel: Panel
 var stats_panel: Panel
+var evolution_panel: Panel
+var skill_panel: Panel
+var evolution_list_vb: VBoxContainer
+var skill_list_vb: VBoxContainer
+var evo_era_filter: int = 0
+var skill_tree_filter: String = ""
+var evo_pill_btn: Button
+var skills_pill_btn: Button
+var evo_nav_column: VBoxContainer
 var stats_label: RichTextLabel
 var codex_label: RichTextLabel
 var inventory_label: RichTextLabel
@@ -148,6 +157,8 @@ func _build_ui() -> void:
 	_build_settings_panel()
 	_build_inventory_panel()
 	_build_stats_panel()
+	_build_evolution_panel()
+	_build_skill_panel()
 	_build_pause()
 	_build_game_over()
 
@@ -304,6 +315,28 @@ func _build_quick_pills() -> void:
 			_refresh_quick_pills()
 	)
 	quick_pills_bar.add_child(potion_btn)
+
+	# Evolution & Skill Tree access column (right of the objective panel, no overlaps)
+	evo_nav_column = VBoxContainer.new()
+	evo_nav_column.name = "EvoNavColumn"
+	evo_nav_column.position = Vector2(300, 164)
+	evo_nav_column.size = Vector2(160, 60)
+	evo_nav_column.add_theme_constant_override("separation", 6)
+	ui_root.add_child(evo_nav_column)
+
+	evo_pill_btn = Button.new()
+	evo_pill_btn.text = "✦ Evolución [T]"
+	evo_pill_btn.custom_minimum_size = Vector2(160, 26)
+	_style_button(evo_pill_btn, Color(0.98, 0.78, 0.30, 0.55), 0.9, 11)
+	evo_pill_btn.pressed.connect(_toggle_evolution)
+	evo_nav_column.add_child(evo_pill_btn)
+
+	skills_pill_btn = Button.new()
+	skills_pill_btn.text = "❖ Habilidades [K]"
+	skills_pill_btn.custom_minimum_size = Vector2(160, 26)
+	_style_button(skills_pill_btn, Color(0.45, 0.85, 1.0, 0.55), 0.9, 11)
+	skills_pill_btn.pressed.connect(_toggle_skill_tree)
+	evo_nav_column.add_child(skills_pill_btn)
 
 # --- TOP CENTER: Gold, Kills & Wave Status ---
 func _build_top_center() -> void:
@@ -669,6 +702,10 @@ func _layout_responsive() -> void:
 		objective_panel.position = Vector2(16, 164)
 		objective_panel.size = Vector2(276, 94)
 
+	if evo_nav_column:
+		evo_nav_column.position = Vector2(300, 164)
+		evo_nav_column.size = Vector2(160, 60)
+
 	if top_right_bar:
 		top_right_bar.size = Vector2(424, 38)
 		top_right_bar.position = Vector2(W - 440, 12)
@@ -732,7 +769,7 @@ func _layout_responsive() -> void:
 		if alert_sub: alert_sub.size = Vector2(ab_w - 32.0, 24)
 
 	# Center all modal overlays safely inside [24..W-24, 24..H-24]
-	for ov in [settings_panel, inventory_panel, stats_panel, game_over_panel]:
+	for ov in [settings_panel, inventory_panel, stats_panel, evolution_panel, skill_panel, game_over_panel]:
 		if ov != null:
 			var ow := minf(ov.custom_minimum_size.x if ov.custom_minimum_size.x > 0 else ov.size.x, W - 48.0)
 			var oh := minf(ov.custom_minimum_size.y if ov.custom_minimum_size.y > 0 else ov.size.y, H - 48.0)
@@ -778,6 +815,8 @@ func _sync_backdrop() -> void:
 		(settings_panel and settings_panel.visible)
 		or (inventory_panel and inventory_panel.visible)
 		or (stats_panel and stats_panel.visible)
+		or (evolution_panel and evolution_panel.visible)
+		or (skill_panel and skill_panel.visible)
 		or (pause_panel and pause_panel.visible)
 		or (game_over_panel and game_over_panel.visible)
 	)
@@ -787,7 +826,305 @@ func _close_sub_modals() -> void:
 	if settings_panel: settings_panel.visible = false
 	if inventory_panel: inventory_panel.visible = false
 	if stats_panel: stats_panel.visible = false
+	if evolution_panel: evolution_panel.visible = false
+	if skill_panel: skill_panel.visible = false
 	_sync_backdrop()
+
+# 4a. ÁRBOL DE EVOLUCIÓN PERMANENTE (6 Eras / 24 Etapas / 118 Formas)
+func _build_evolution_panel() -> void:
+	evolution_panel = _build_overlay_panel("EvolutionPanel", "✦ Árbol de Evolución Permanente", Vector2(880, 620))
+	var info := _label(evolution_panel, "", Vector2(22, 48), Vector2(836, 22), 13, Color(0.72, 0.88, 1.0))
+	info.name = "EvoInfo"
+
+	var era_row := HBoxContainer.new()
+	era_row.name = "EvoEraRow"
+	era_row.position = Vector2(22, 76)
+	era_row.size = Vector2(836, 30)
+	era_row.add_theme_constant_override("separation", 6)
+	evolution_panel.add_child(era_row)
+
+	var scroll := ScrollContainer.new()
+	scroll.name = "EvoScroll"
+	scroll.position = Vector2(22, 112)
+	scroll.size = Vector2(836, 424)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	evolution_panel.add_child(scroll)
+	evolution_list_vb = VBoxContainer.new()
+	evolution_list_vb.name = "EvoList"
+	evolution_list_vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	evolution_list_vb.add_theme_constant_override("separation", 6)
+	scroll.add_child(evolution_list_vb)
+
+	var tip := _label(evolution_panel, "Las decisiones de evolución son PERMANENTES: al elegir una rama, las demás se sellan para siempre.", Vector2(22, 566), Vector2(836, 40), 12, Color(1.0, 0.82, 0.45))
+	tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+func _refresh_evolution_panel() -> void:
+	if evolution_panel == null or evolution_list_vb == null:
+		return
+	while evolution_list_vb.get_child_count() > 0:
+		var c := evolution_list_vb.get_child(0)
+		evolution_list_vb.remove_child(c)
+		c.queue_free()
+	var era_row: HBoxContainer = evolution_panel.get_node_or_null("EvoEraRow")
+	if era_row != null:
+		for ch in era_row.get_children():
+			era_row.remove_child(ch)
+			ch.queue_free()
+
+	if player == null or player.evolution_manager == null:
+		return
+	var em = player.evolution_manager
+	var cat = em.catalog
+	var ctx: Dictionary = player.get_evolution_context()
+	var cur_form: Dictionary = em.get_current_form()
+	var cur_stage := int(cur_form.get("stage", 1))
+	var cur_era := int(cur_form.get("era", 1))
+	if evo_era_filter <= 0:
+		evo_era_filter = cur_era
+
+	var info: Label = evolution_panel.get_node_or_null("EvoInfo")
+	if info:
+		info.text = "Forma actual: %s  •  Etapa %02d/24  •  %s  •  Esencia Evolutiva: %d" % [str(cur_form.get("name", "")), cur_stage, str(cur_form.get("lineage_name", "")), int(em.evolution_xp)]
+
+	# Era filter buttons
+	for era in cat.eras:
+		var era_num := int(era.get("era", 0))
+		var eb := Button.new()
+		eb.text = str(era.get("name", "Era"))
+		eb.custom_minimum_size = Vector2(136, 28)
+		eb.disabled = era_num > cur_stage and era_num > cur_era
+		_style_button(eb, Color(0.98, 0.78, 0.30, 0.55) if era_num == evo_era_filter else Color(0.35, 0.55, 0.9, 0.4), 0.9, 11)
+		eb.pressed.connect(func():
+			_play_ui_click()
+			evo_era_filter = era_num
+			_refresh_evolution_panel()
+		)
+		era_row.add_child(eb)
+
+	# Form rows for the filtered era
+	for f in cat.get_forms_for_era(evo_era_filter):
+		var fid := str(f.get("id", ""))
+		var stg := int(f.get("stage", 0))
+		var is_current := fid == str(em.current_form_id)
+		var is_discarded := em.is_form_discarded(fid)
+		var in_history := em.is_form_in_history(fid)
+		var direct_child := false
+		for nid in cur_form.get("next_forms", []):
+			if str(nid) == fid:
+				direct_child = true
+				break
+
+		var row := Panel.new()
+		row.custom_minimum_size = Vector2(820, 58)
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var accent := Color(0.45, 0.74, 1.0, 0.35)
+		var status_txt := ""
+		if is_current:
+			accent = Color(1.0, 0.82, 0.30, 0.9)
+			status_txt = "★ FORMA ACTUAL"
+		elif is_discarded:
+			accent = Color(0.55, 0.30, 0.32, 0.55)
+			status_txt = "✕ DESCARTADA (PERMANENTE)"
+		elif in_history:
+			accent = Color(0.40, 0.85, 0.55, 0.55)
+			status_txt = "✓ RECORRIDA"
+		elif direct_child:
+			var ev := em.evaluate_unlock_conditions(fid, ctx)
+			if bool(ev.get("can_evolve", false)):
+				accent = Color(0.45, 1.0, 0.65, 0.8)
+				status_txt = "▶ DISPONIBLE — ¡Puedes evolucionar YA!"
+			else:
+				accent = Color(0.85, 0.55, 0.30, 0.6)
+				var reasons: Array = ev.get("reasons", [])
+				var r0 := str(reasons[0]) if reasons.size() > 0 else "Bloqueada"
+				status_txt = "⚠ BLOQUEADA — %s" % r0
+		else:
+			accent = Color(0.35, 0.42, 0.6, 0.45)
+			status_txt = "• Otra rama del destino"
+		row.add_theme_stylebox_override("panel", _panel_style(Color(0.05, 0.08, 0.16, 0.94), accent, 10, 1))
+		evolution_list_vb.add_child(row)
+
+		_label(row, "%02d • %s" % [stg, str(f.get("name", ""))], Vector2(14, 6), Vector2(560, 20), 14, Color(0.96, 0.98, 1.0))
+		var uc: Dictionary = f.get("unlock_conditions", {})
+		_label(row, "Linaje: %s  •  Requisitos: Nv.%d  •  Esencia %d  •  Mats %s" % [str(f.get("lineage_name", "")), int(uc.get("min_level", 1)), int(uc.get("min_evolution_xp", 0)), str(uc.get("required_materials", {})) if not (uc.get("required_materials", {}) as Dictionary).is_empty() else "—"], Vector2(14, 30), Vector2(660, 20), 11, Color(0.70, 0.82, 0.95))
+		var st_lbl := _label(row, status_txt, Vector2(586, 8), Vector2(220, 20), 11, accent)
+		st_lbl.name = "Status"
+
+		if direct_child and not is_current and not is_discarded:
+			var ev2 := em.evaluate_unlock_conditions(fid, ctx)
+			var eb2 := Button.new()
+			eb2.text = "✦ EVOLUCIONAR"
+			eb2.position = Vector2(660, 26)
+			eb2.size = Vector2(150, 26)
+			eb2.disabled = not bool(ev2.get("can_evolve", false))
+			_style_button(eb2, Color(1.0, 0.85, 0.35, 0.85), 0.95, 12)
+			var target := fid
+			eb2.pressed.connect(func():
+				_play_ui_click()
+				if player != null:
+					player.try_evolve(target)
+					_refresh_evolution_panel()
+			)
+			row.add_child(eb2)
+
+# 4b. ÁRBOL DE HABILIDADES (6 Ramas / 72 Habilidades)
+func _build_skill_panel() -> void:
+	skill_panel = _build_overlay_panel("SkillPanel", "❖ Árbol de Habilidades (72)", Vector2(900, 620))
+	var info := _label(skill_panel, "", Vector2(22, 48), Vector2(856, 22), 13, Color(0.72, 0.88, 1.0))
+	info.name = "SkillInfo"
+
+	var tree_row := HBoxContainer.new()
+	tree_row.name = "SkillTreeRow"
+	tree_row.position = Vector2(22, 76)
+	tree_row.size = Vector2(856, 30)
+	tree_row.add_theme_constant_override("separation", 5)
+	skill_panel.add_child(tree_row)
+
+	var scroll := ScrollContainer.new()
+	scroll.name = "SkillScroll"
+	scroll.position = Vector2(22, 112)
+	scroll.size = Vector2(856, 424)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	skill_panel.add_child(scroll)
+	skill_list_vb = VBoxContainer.new()
+	skill_list_vb.name = "SkillList"
+	skill_list_vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	skill_list_vb.add_theme_constant_override("separation", 6)
+	scroll.add_child(skill_list_vb)
+
+	_label(skill_panel, "Las habilidades ACTIVAS se asignan a las ranuras Q / E / R / Shift desde su tarjeta.", Vector2(22, 566), Vector2(856, 40), 12, Color(1.0, 0.82, 0.45))
+
+func _refresh_skill_panel() -> void:
+	if skill_panel == null or skill_list_vb == null:
+		return
+	while skill_list_vb.get_child_count() > 0:
+		var c := skill_list_vb.get_child(0)
+		skill_list_vb.remove_child(c)
+		c.queue_free()
+	var tree_row: HBoxContainer = skill_panel.get_node_or_null("SkillTreeRow")
+	if tree_row != null:
+		for ch in tree_row.get_children():
+			tree_row.remove_child(ch)
+			ch.queue_free()
+
+	if player == null or player.skill_manager == null:
+		return
+	var sm = player.skill_manager
+	var sc = sm.catalog
+	if skill_tree_filter == "":
+		skill_tree_filter = "physical_mastery"
+
+	var info: Label = skill_panel.get_node_or_null("SkillInfo")
+	if info:
+		var cur_f: Dictionary = player.evolution_manager.get_current_form() if player.evolution_manager != null else {}
+		info.text = "Puntos de Habilidad: %d  •  Etapa %02d  •  Linaje: %s  •  Aprendidas: %d/72" % [int(sm.skill_points), int(cur_f.get("stage", 1)), str(cur_f.get("lineage_name", "")), sm.unlocked_skills.size()]
+
+	for t in sc.trees:
+		var tid := str(t.get("id", ""))
+		var tb := Button.new()
+		tb.text = "%s %s" % [str(t.get("icon", "✦")), str(t.get("name", ""))]
+		tb.custom_minimum_size = Vector2(136, 28)
+		_style_button(tb, Color(0.98, 0.78, 0.30, 0.55) if tid == skill_tree_filter else Color(0.35, 0.55, 0.9, 0.4), 0.9, 10)
+		tb.pressed.connect(func():
+			_play_ui_click()
+			skill_tree_filter = tid
+			_refresh_skill_panel()
+		)
+		tree_row.add_child(tb)
+
+	var lineage := ""
+	if player.evolution_manager != null:
+		lineage = player.evolution_manager.get_current_lineage()
+
+	for s in sc.get_skills_for_tree(skill_tree_filter):
+		var sid := str(s.get("id", ""))
+		var learned := sm.is_unlocked(sid)
+		var chk := sm.can_unlock_skill(sid, player.evolution_manager.get_current_stage() if player.evolution_manager != null else 1, lineage)
+		var s_type := str(s.get("type", "active"))
+		var is_active := s_type == "active"
+
+		var row := Panel.new()
+		row.custom_minimum_size = Vector2(840, 54)
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var acc := Color(0.45, 0.74, 1.0, 0.35)
+		if learned:
+			acc = Color(0.40, 0.9, 0.55, 0.75)
+		elif bool(chk.get("ok", false)):
+			acc = Color(1.0, 0.85, 0.4, 0.7)
+		row.add_theme_stylebox_override("panel", _panel_style(Color(0.05, 0.08, 0.16, 0.94), acc, 10, 1))
+		skill_list_vb.add_child(row)
+
+		var type_txt := "ACTIVA" if is_active else "PASIVA"
+		var status_txt := "✓ APRENDIDA" if learned else ("▶ DISPONIBLE" if bool(chk.get("ok", false)) else ("⚠ %s" % (str((chk.get("reasons", ["Bloqueada"])[0])) if (chk.get("reasons", []) as Array).size() > 0 else "Bloqueada")))
+		_label(row, "%s  [%s • Rama %s]  Coste: %d Pt(s)" % [str(s.get("name", "")), type_txt, str(s.get("tree_name", "")), int(s.get("cost_points", 1))], Vector2(14, 6), Vector2(640, 20), 13, Color(0.96, 0.98, 1.0))
+		_label(row, "%s  •  Etapa mín. %02d  •  %s" % [str(s.get("description", "")), int(s.get("min_stage", 1)), status_txt], Vector2(14, 28), Vector2(700, 20), 11, Color(0.72, 0.84, 0.96))
+
+		if not learned:
+			var ub := Button.new()
+			ub.text = "✦ APRENDER"
+			ub.position = Vector2(710, 24)
+			ub.size = Vector2(116, 24)
+			ub.disabled = not bool(chk.get("ok", false))
+			_style_button(ub, Color(1.0, 0.85, 0.35, 0.85), 0.95, 11)
+			var target := sid
+			var stage: int = player.evolution_manager.get_current_stage() if player.evolution_manager != null else 1
+			ub.pressed.connect(func():
+				_play_ui_click()
+				if player != null and player.skill_manager != null:
+					var res := player.skill_manager.unlock_skill(target, stage, lineage)
+					if bool(res.get("ok", false)):
+						_on_log("Habilidad aprendida: %s" % str(res.get("skill", {}).get("name", target)), "upgrade")
+					else:
+						var rr: Array = res.get("reasons", [])
+						if rr.size() > 0:
+							_on_log(str(rr[0]), "ui")
+					_refresh_skill_panel()
+			)
+			row.add_child(ub)
+		elif is_active:
+			# Slot assignment for learned active skills
+			var slot_row := HBoxContainer.new()
+			slot_row.position = Vector2(560, 22)
+			slot_row.size = Vector2(280, 26)
+			slot_row.add_theme_constant_override("separation", 4)
+			row.add_child(slot_row)
+			for slot in ["Q", "E", "R", "SHIFT"]:
+				var equipped_here := str(sm.equipped_slots.get(slot, "")) == sid
+				var sb := Button.new()
+				sb.text = slot if not equipped_here else "[%s] ✓" % slot
+				sb.custom_minimum_size = Vector2(62, 24)
+				_style_button(sb, Color(0.45, 1.0, 0.65, 0.6) if equipped_here else Color(0.35, 0.55, 0.9, 0.4), 0.9, 10)
+				var slot_target: String = slot
+				sb.pressed.connect(func():
+					_play_ui_click()
+					if player != null and player.skill_manager != null:
+						player.skill_manager.equip_active_skill(slot_target, sid)
+						_refresh_skill_panel()
+				)
+				slot_row.add_child(sb)
+
+func _toggle_evolution() -> void:
+	_play_ui_click()
+	var next_vis := not evolution_panel.visible if evolution_panel else false
+	_close_sub_modals()
+	if evolution_panel:
+		evo_era_filter = 0
+		evolution_panel.visible = next_vis
+		if next_vis:
+			_refresh_evolution_panel()
+	_sync_backdrop()
+	_layout_responsive()
+
+func _toggle_skill_tree() -> void:
+	_play_ui_click()
+	var next_vis := not skill_panel.visible if skill_panel else false
+	_close_sub_modals()
+	if skill_panel:
+		skill_panel.visible = next_vis
+		if next_vis:
+			_refresh_skill_panel()
+	_sync_backdrop()
+	_layout_responsive()
 
 # 1. AJUSTES (Quality + Persistent Volume Sliders + Gameplay Toggles)
 func _build_settings_panel() -> void:
@@ -1091,8 +1428,13 @@ func _on_xp(cur: int, req: int, level: int) -> void:
 	var gd = get_node_or_null("/root/GameData")
 	if gd == null and player:
 		gd = player._get_gamedata()
-	if gd:
-		var tier: Dictionary = gd.get_sword_for_level(level)
+	# v3: display the ACTUAL permanent evolution form (never the level-derived tier)
+	var tier: Dictionary = {}
+	if player != null and player.get("evolution_manager") != null and player.evolution_manager != null:
+		tier = player.evolution_manager.get_legacy_tier_view()
+	if tier.is_empty() and gd:
+		tier = gd.get_sword_for_level(level)
+	if not tier.is_empty():
 		if sword_text:
 			sword_text.text = str(tier["name"])
 		if subtitle_text:
@@ -1100,7 +1442,7 @@ func _on_xp(cur: int, req: int, level: int) -> void:
 			if next_lv != null:
 				subtitle_text.text = "%s • Próx. Evo: Nv.%d" % [str(tier.get("subtitle", "")).split("•")[0].strip_edges(), int(next_lv)]
 			else:
-				subtitle_text.text = "Fase VIII • FORMA DIVINA FINAL"
+				subtitle_text.text = "Era VI • FORMA SUPREMA FINAL"
 		if portrait_ring:
 			var acol: Color = tier.get("aura_color", Color(0.45, 0.86, 1.0))
 			portrait_ring.add_theme_stylebox_override(
@@ -1340,6 +1682,13 @@ func _update_floating_texts(delta: float) -> void:
 
 # --- INPUT & PAUSE / OVERLAY TOGGLES ---
 func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.physical_keycode == KEY_T:
+			_toggle_evolution()
+			return
+		elif event.physical_keycode == KEY_K:
+			_toggle_skill_tree()
+			return
 	if event.is_action_pressed("ui_cancel"):
 		if settings_panel and settings_panel.visible:
 			settings_panel.visible = false
@@ -1349,6 +1698,12 @@ func _input(event: InputEvent) -> void:
 			_sync_backdrop()
 		elif stats_panel and stats_panel.visible:
 			stats_panel.visible = false
+			_sync_backdrop()
+		elif evolution_panel and evolution_panel.visible:
+			evolution_panel.visible = false
+			_sync_backdrop()
+		elif skill_panel and skill_panel.visible:
+			skill_panel.visible = false
 			_sync_backdrop()
 		else:
 			_toggle_pause()

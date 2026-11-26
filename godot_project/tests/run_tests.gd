@@ -42,6 +42,13 @@ func _process(_delta: float) -> bool:
 	test_arena_decor_quality_levels()
 	test_hud_layout_and_overlays_all_resolutions()
 	test_pilot_sword_3d_glb_and_pbr()
+	test_evolution_catalog_and_validator()
+	test_evolution_permanent_branching_rules()
+	test_skill_catalog_and_progression()
+	test_sword_stats_calculator_17_attributes()
+	test_save_v3_permanent_evolution_survival()
+	test_player_evolution_integration()
+	test_evolution_skill_ui_panels()
 
 	print("=== RESULTS: %d passed, %d failed ===" % [passes, failures.size()])
 	for f in failures:
@@ -265,16 +272,32 @@ func test_runtime_combat_and_progression() -> void:
 	assert_true(float(p.cooldowns["dash"]) > 0.0, "dash enters cooldown")
 	assert_true(p.invuln_timer > 0.0, "dash grants brief invulnerability")
 
-	# Level progression & evolution signal
+	# Level progression & PERMANENT evolution branching
 	var evo_state := {"count": 0, "last_id": ""}
 	p.evolution_changed.connect(func(t):
 		evo_state["count"] += 1
-		evo_state["last_id"] = str(t["id"])
+		evo_state["last_id"] = str(t.get("form_id", ""))
 	)
-	p.add_xp(500) # Enough to cross Nv.5 Copper evolution
+	var pts_before := int(p.skill_manager.skill_points)
+	p.add_xp(500) # Enough to cross Nv.5
 	assert_true(p.sword_level >= 5, "add_xp advances sword_level >= 5")
-	assert_true(int(evo_state["count"]) >= 1, "evolution_changed signal emitted on tier up")
-	assert_eq(str(p.current_tier["id"]), str(gd.get_sword_for_level(p.sword_level)["id"]), "active sword tier matches level")
+	assert_true(int(p.skill_manager.skill_points) > pts_before, "level-up grants Skill Points")
+	assert_true(int(p.evolution_manager.evolution_xp) > 0, "level-up grants Evolution Essence")
+	# Branching is MANUAL and PERMANENT: no auto form change from level anymore
+	assert_eq(str(p.evolution_manager.current_form_id), "wood_origin_ancestral_blade", "form stays Stage 01 until a manual permanent commit")
+	assert_eq(int(evo_state["count"]), 0, "no auto evolution_changed on level up")
+	var skip_res := p.try_evolve("awakening_ironwood_storm_edge")
+	assert_true(not bool(skip_res.get("ok", true)), "cannot skip stages (non-direct form rejected)")
+	p.add_material("slime_gel", 2)
+	var evo_res := p.try_evolve("wood_mineral_copper_root")
+	assert_true(bool(evo_res.get("ok", false)), "manual permanent evolution to direct child succeeds")
+	assert_eq(int(evo_state["count"]), 1, "evolution_changed emitted on permanent commit")
+	assert_eq(str(evo_state["last_id"]), "wood_mineral_copper_root", "signal carries new form id")
+	assert_eq(str(p.evolution_manager.current_form_id), "wood_mineral_copper_root", "current_form_id updated")
+	assert_true(p.evolution_manager.is_form_discarded("wood_verdant_living_bough"), "sibling branch sealed permanently")
+	assert_true(not bool(p.try_evolve("wood_verdant_living_bough").get("ok", true)), "sealed sibling cannot be chosen later")
+	assert_eq(str(p.current_tier.get("form_id", "")), "wood_mineral_copper_root", "legacy tier view reflects committed form")
+	assert_true(int(p.stats["damage"]) > 0, "stats recalculated after evolution")
 
 	# Forge upgrades
 	p.gold = 500
@@ -378,7 +401,7 @@ func test_runtime_malakor_phases_and_rewards() -> void:
 
 func test_save_roundtrip_and_v1_migration() -> void:
 	var ss = load("res://scripts/SaveSystem.gd").new()
-	assert_eq(ss.SAVE_VERSION, 2, "SaveSystem SAVE_VERSION is 2")
+	assert_eq(ss.SAVE_VERSION, 3, "SaveSystem SAVE_VERSION is 3")
 
 	var world := Node3D.new()
 	root.add_child(world)
@@ -397,6 +420,11 @@ func test_save_roundtrip_and_v1_migration() -> void:
 	p1.add_item("rune_wind")
 	p1.equip_relic("rune_wind")
 	p1.consumables["potion_hp"] = 5
+	# v3: commit a permanent evolution + learn a skill before saving
+	p1.add_material("slime_gel", 2)
+	var evo_res := p1.try_evolve("wood_mineral_copper_root")
+	assert_true(bool(evo_res.get("ok", false)), "p1 permanent evolution committed pre-save")
+	assert_true(bool(p1.skill_manager.unlock_skill("phys_pas_edge", p1.evolution_manager.get_current_stage(), p1.evolution_manager.get_current_lineage()).get("ok", false)), "p1 learned phys_pas_edge pre-save")
 
 	var tmp_v2 := "user://unit_test_save_v2.json"
 	ss.save_game(p1, tmp_v2)
@@ -415,6 +443,13 @@ func test_save_roundtrip_and_v1_migration() -> void:
 	assert_true(p2.inventory_items.has("rune_wind"), "roundtrip inventory_items")
 	assert_eq(str(p2.equipped["rune"]), "rune_wind", "roundtrip equipped rune")
 	assert_eq(int(p2.consumables["potion_hp"]), 5, "roundtrip consumables")
+	# v3: permanent evolution & skill progression survive the roundtrip verbatim
+	assert_eq(str(p2.evolution_manager.current_form_id), "wood_mineral_copper_root", "v3 roundtrip preserves committed permanent form (NOT level-derived)")
+	assert_true(p2.evolution_manager.is_form_discarded("wood_verdant_living_bough"), "v3 roundtrip preserves sealed sibling branches")
+	assert_true(p2.skill_manager.is_unlocked("phys_pas_edge"), "v3 roundtrip preserves learned skills")
+	assert_eq(int(p2.skill_manager.skill_points), int(p1.skill_manager.skill_points), "roundtrip skill points")
+	assert_eq(str(p2.skill_manager.equipped_slots.get("Q", "")), "whirlwind", "roundtrip active slot assignment")
+	assert_eq(str(p2.current_tier.get("form_id", "")), "wood_mineral_copper_root", "legacy tier view reflects restored evolution")
 
 	# Legacy v1 migration test
 	var tmp_v1 := "user://unit_test_save_v1.json"
@@ -440,6 +475,8 @@ func test_save_roundtrip_and_v1_migration() -> void:
 	assert_eq(p3.gold, 310, "migrated v1 gold")
 	assert_eq(int(p3.upgrades["sharpness"]), 2, "migrated v1 sharpness")
 	assert_eq(int(p3.consumables.get("potion_hp", 0)), 2, "migrated v1 gets default potions")
+	assert_eq(str(p3.evolution_manager.current_form_id), "wood_mineral_copper_root", "v1 migration synthesizes level-appropriate evolution state")
+	assert_true(int(p3.skill_manager.skill_points) >= 1, "v1 migration grants skill points")
 	assert_true(absf(float(ss.settings["master_volume"]) - 0.42) < 0.001, "migrated v1 volume -> master_volume")
 
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(tmp_v2))
@@ -604,4 +641,257 @@ func test_pilot_sword_3d_glb_and_pbr() -> void:
 		var surf_mat: Material = m.surface_get_material(0)
 		assert_true(surf_mat is BaseMaterial3D, "Sub-part has authored BaseMaterial3D: %s" % mi.name)
 	built.free()
+
+# --- PHASE B: PERMANENT EVOLUTION & 72-SKILL SYSTEM ---
+
+func test_evolution_catalog_and_validator() -> void:
+	var cat := EvolutionCatalog.new(true)
+	assert_eq(cat.get_total_form_count(), 118, "evolution catalog loads 118 forms")
+	assert_eq(cat.eras.size(), 6, "catalog defines 6 Eras")
+	assert_eq(str(cat.root_form_id), "wood_origin_ancestral_blade", "root form id")
+	assert_true(cat.has_form("wood_origin_ancestral_blade"), "root form exists")
+	assert_eq(cat.resolve_id("wood"), "wood_origin_ancestral_blade", "legacy alias 'wood' resolves to canonical form")
+	for st in range(1, 25):
+		assert_true(cat.get_forms_for_stage(st).size() >= 1, "stage %02d has forms" % st)
+	var root: Dictionary = cat.get_form("wood_origin_ancestral_blade")
+	assert_eq(int(root.get("stage", 0)), 1, "root is Stage 01")
+	assert_eq(str(root.get("model_path", "")), "res://assets/models/swords/wood_ancestral/sword_01_wood_ancestral.glb", "root uses the verified pilot GLB")
+	assert_true(root.get("aura_color") is Color, "catalog colors normalized to Color objects")
+	assert_eq(cat.get_next_forms("wood_origin_ancestral_blade").size(), 3, "root offers 3 permanent branches")
+	assert_true(str(root.get("protagonist_identity", "")) == "sentient_sword", "root preserves sentient sword identity")
+	var val := EvolutionValidator.validate_graph(cat)
+	if not bool(val.get("valid", false)):
+		for e in val.get("errors", []):
+			print("  GRAPH ERROR: ", e)
+	assert_true(bool(val.get("valid", false)), "automated graph validation passes (no dead ends, no orphans, no cycles)")
+	assert_eq(int(val.get("stats", {}).get("total_forms", 0)), 118, "validator counts 118 forms")
+	assert_eq(int(val.get("stats", {}).get("hybrid_forms", 0)), 5, "validator counts 5 milestone hybrid forms")
+	assert_true(bool(cat.get_form("hybrid_celestial_abyss_eclipse").get("is_hybrid", false)), "milestone hybrid form flagged")
+	var hybrid: Dictionary = cat.get_form("hybrid_celestial_abyss_eclipse")
+	assert_true((hybrid.get("parent_forms", []) as Array).size() >= 2, "hybrid form has multiple parents")
+
+func test_evolution_permanent_branching_rules() -> void:
+	var em := EvolutionManager.new()
+	assert_eq(str(em.current_form_id), "wood_origin_ancestral_blade", "manager starts at root form")
+	assert_eq(em.get_available_branch_options().size(), 3, "3 branch options at root")
+	var ctx := {"sword_level": 1, "materials": {}, "unlocked_skills": {}}
+	var ev := em.evaluate_unlock_conditions("wood_mineral_copper_root", ctx)
+	assert_true(not bool(ev.get("can_evolve", true)), "unlock blocked at low level")
+	assert_true((ev.get("reasons", []) as Array).size() >= 1, "blocked reasons reported")
+	assert_true((ev.get("checks", []) as Array).size() >= 3, "structured condition checks reported (5-condition evaluator)")
+	ctx["sword_level"] = 3
+	ctx["materials"] = {"slime_gel": 2}
+	em.add_evolution_xp(40)
+	var ev2 := em.evaluate_unlock_conditions("wood_mineral_copper_root", ctx)
+	assert_true(bool(ev2.get("can_evolve", false)), "conditions met -> can evolve")
+	assert_true(not bool(em.commit_permanent_evolution("awakening_ironwood_storm_edge", ctx).get("ok", true)), "cannot skip stages")
+	var res := em.commit_permanent_evolution("wood_mineral_copper_root", ctx, ctx["materials"])
+	assert_true(bool(res.get("ok", false)), "permanent commit succeeds")
+	assert_eq(int(ctx["materials"].get("slime_gel", 0)), 0, "required materials consumed on commit")
+	assert_eq(str(em.current_form_id), "wood_mineral_copper_root", "current_form_id committed")
+	assert_eq(em.evolution_history.size(), 2, "evolution history records the choice")
+	assert_eq(em.get_current_stage(), 2, "current stage advanced to 02")
+	assert_true(em.is_form_discarded("wood_verdant_living_bough"), "sibling sealed (verdant bough)")
+	assert_true(em.is_form_discarded("wood_charred_ash_thorn"), "sibling sealed (ash thorn)")
+	assert_true(not bool(em.evaluate_unlock_conditions("wood_verdant_living_bough", ctx).get("can_evolve", true)), "sealed sibling evaluated as locked")
+	assert_true(not bool(em.commit_permanent_evolution("wood_verdant_living_bough", ctx).get("ok", true)), "commit to sealed sibling rejected")
+	assert_true(em.is_form_in_history("wood_mineral_copper_root"), "history contains current form")
+	var d := em.to_dict()
+	var em2 := EvolutionManager.new()
+	em2.from_dict(d)
+	assert_eq(str(em2.current_form_id), str(em.current_form_id), "state roundtrip: form id")
+	assert_eq(em2.evolution_history.size(), em.evolution_history.size(), "state roundtrip: history")
+	assert_eq(em2.discarded_form_ids.size(), em.discarded_form_ids.size(), "state roundtrip: discarded branches")
+	assert_eq(int(em2.evolution_xp), int(em.evolution_xp), "state roundtrip: evolution essence")
+
+func test_skill_catalog_and_progression() -> void:
+	var sc := SkillCatalog.new(true)
+	var v := sc.validate_catalog()
+	if not bool(v.get("valid", false)):
+		for e in v.get("errors", []):
+			print("  SKILL ERROR: ", e)
+	assert_true(bool(v.get("valid", false)), "skill catalog validates (prereqs, trees, types)")
+	assert_eq(int(v.get("total_skills", 0)), 72, "72 skills")
+	assert_eq(int(v.get("active_skills", 0)), 36, "36 active skills")
+	assert_eq(int(v.get("passive_skills", 0)), 36, "36 passive skills")
+	assert_eq(sc.trees.size(), 6, "6 skill trees")
+	assert_true(sc.has_skill("wave"), "legacy 'wave' alias resolves")
+	assert_eq(sc.canonical_id("wave"), "swordWave", "'wave' -> canonical 'swordWave'")
+	assert_true(sc.has_skill("whirlwind") and sc.has_skill("swordWave") and sc.has_skill("ultimate") and sc.has_skill("dash"), "canonical starter skills present in catalog")
+	var sm := SkillTreeManager.new()
+	assert_eq(sm.unlocked_skills.size(), 4, "4 starter skills pre-unlocked")
+	assert_true(sm.is_unlocked("whirlwind") and sm.is_unlocked("swordWave") and sm.is_unlocked("ultimate") and sm.is_unlocked("dash"), "starter skills canonical")
+	var chk := sm.can_unlock_skill("phys_pas_edge", 1, "origin")
+	assert_true(bool(chk.get("ok", false)), "tier-1 passive unlockable with starter points")
+	assert_true(not bool(sm.can_unlock_skill("phys_pas_tempo", 1, "origin").get("ok", true)), "prerequisite gate blocks chained skill")
+	assert_true(not bool(sm.can_unlock_skill("leg_pas_spark", 1, "origin").get("ok", true)), "min_stage gate blocks stage-locked skill")
+	var locked := sm.can_unlock_skill("phys_act_quake", 15, "origin")
+	var found_lineage_block := false
+	for r in locked.get("reasons", []):
+		if str(r).find("linaje") != -1:
+			found_lineage_block = true
+	assert_true(found_lineage_block, "lineage-exclusivity gate reports origin lineage lock")
+	var allowed := sm.can_unlock_skill("phys_act_quake", 15, "blessed")
+	var blocked_in_allowed := false
+	for r in allowed.get("reasons", []):
+		if str(r).find("linaje") != -1:
+			blocked_in_allowed = true
+	assert_true(not blocked_in_allowed, "blessed lineage passes exclusivity check for blessed/cursed skill")
+	sm.add_skill_points(10)
+	assert_eq(int(sm.skill_points), 11, "add_skill_points accumulates (1 starter + 10)")
+	assert_true(bool(sm.unlock_skill("phys_pas_edge", 1, "origin").get("ok", false)), "unlock_skill succeeds")
+	assert_true(sm.is_unlocked("phys_pas_edge"), "passive learned")
+	assert_eq(int(sm.skill_points), 10, "cost deducted on unlock")
+	var mods := sm.get_aggregated_passive_modifiers("origin")
+	assert_true(absf(float(mods.get("physical_damage_pct", 0.0)) - 0.08) < 0.0001, "passive modifiers aggregated (+8% phys damage)")
+	assert_true(sm.equip_active_skill("Q", "whirlwind"), "active slot assignment works")
+	assert_eq(str(sm.get_equipped_skill_for_slot("Q")), "whirlwind", "slot holds assigned skill")
+	assert_true(not sm.equip_active_skill("Q", "phys_pas_edge"), "cannot equip passive into active slot")
+	assert_true(not sm.equip_active_skill("Z", "whirlwind"), "invalid slot rejected")
+	var sd := sm.to_dict()
+	var sm2 := SkillTreeManager.new()
+	sm2.from_dict(sd)
+	assert_true(sm2.is_unlocked("phys_pas_edge"), "skill state roundtrip preserves unlocks")
+	assert_eq(str(sm2.equipped_slots.get("Q", "")), "whirlwind", "skill state roundtrip preserves slots")
+
+func test_sword_stats_calculator_17_attributes() -> void:
+	var cat := EvolutionCatalog.new(true)
+	var form := cat.get_form("wood_origin_ancestral_blade")
+	var calc := SwordStatsCalculator.calculate_stats(form, 1, {}, {}, {})
+	for k in ["physical_damage", "elemental_damage", "attack_speed", "attack_range", "crit_chance", "crit_damage", "armor_penetration", "life_steal", "max_hp", "defense", "elemental_resistance", "energy_regen", "max_energy", "move_speed", "cdr", "status_chance", "soul_absorption"]:
+		assert_true(calc.has(k), "17-stat key present: %s" % k)
+	assert_true(int(calc["damage"]) > 0, "legacy 'damage' key derived (phys + 0.45*elem)")
+	assert_eq(int(calc["max_hp"]), 120, "Stage 01 form base HP")
+	assert_true(int(calc["max_energy"]) == 100, "Stage 01 base energy")
+	var c10 := SwordStatsCalculator.calculate_stats(form, 10, {}, {}, {})
+	assert_true(float(c10["physical_damage"]) > float(calc["physical_damage"]), "sword level scaling raises physical damage")
+	assert_true(int(c10["max_hp"]) > int(calc["max_hp"]), "sword level scaling raises max HP")
+	var cU := SwordStatsCalculator.calculate_stats(form, 1, {"sharpness": 5.0, "vitality": 3.0}, {}, {})
+	assert_true(float(cU["physical_damage"]) > float(calc["physical_damage"]), "forge sharpness raises damage")
+	assert_true(int(cU["max_hp"]) > int(calc["max_hp"]), "vitality raises max HP")
+	var cR := SwordStatsCalculator.calculate_stats(form, 1, {}, {"max_hp": 35.0, "damage_pct": 0.2}, {})
+	assert_eq(int(cR["max_hp"]), int(calc["max_hp"]) + 35, "equipped relic max_hp bonus applied")
+	assert_true(float(cR["physical_damage"]) > float(calc["physical_damage"]), "equipped relic damage_pct applied")
+	var cP := SwordStatsCalculator.calculate_stats(form, 1, {}, {}, {"physical_damage_pct": 0.08, "crit_chance_add": 0.05})
+	assert_true(float(cP["physical_damage"]) > float(calc["physical_damage"]), "unlocked passive modifiers applied")
+	assert_true(absf(float(cP["crit_chance"]) - (float(calc["crit_chance"]) + 0.05)) < 0.0001, "passive crit additive")
+	var cC := SwordStatsCalculator.calculate_stats(form, 1, {"fortune": 10.0}, {"crit_chance": 0.9}, {"crit_chance_add": 0.5})
+	assert_true(float(cC["crit_chance"]) <= 0.85, "crit chance clamped to 0.85")
+	var cD := SwordStatsCalculator.calculate_stats(form, 40, {}, {"cd_reduction": 0.6}, {"cdr_add": 0.4})
+	assert_true(float(cD["cdr"]) <= 0.45, "cdr clamped to 0.45")
+	# Blessed vs cursed trade-offs differ on the same stage
+	var blessed := cat.get_form("blessed_auric_bastion_claymore")
+	var cursed := cat.get_form("cursed_abyssal_guillotine_edge")
+	var cb := SwordStatsCalculator.calculate_stats(blessed, 1, {}, {}, {})
+	var cc := SwordStatsCalculator.calculate_stats(cursed, 1, {}, {}, {})
+	assert_true(float(cb["physical_damage"]) != float(cc["physical_damage"]), "branch trade-offs produce distinct stat profiles")
+
+func test_save_v3_permanent_evolution_survival() -> void:
+	var ss = load("res://scripts/SaveSystem.gd").new()
+	var world := Node3D.new()
+	root.add_child(world)
+	var p1 := _make_test_player(world)
+	p1.jump_to_level(9)
+	p1.add_material("slime_gel", 2)
+	assert_true(bool(p1.try_evolve("wood_mineral_copper_root").get("ok", false)), "permanent evolution committed pre-save")
+	var tmp_v3 := "user://unit_test_save_v3.json"
+	assert_true(ss.save_game(p1, tmp_v3), "v3 save succeeds")
+
+	# CRITICAL ACCEPTANCE: a v3 save's evolution_state must NEVER be re-derived from
+	# sword_level. Tamper the file so sword_level points at a different legacy tier.
+	var rf := FileAccess.open(tmp_v3, FileAccess.READ)
+	var raw = JSON.parse_string(rf.get_as_text())
+	rf.close()
+	assert_true(typeof(raw) == TYPE_DICTIONARY and (raw as Dictionary).has("evolution_state"), "v3 payload contains evolution_state")
+	(raw as Dictionary)["sword_level"] = 1
+	(raw as Dictionary)["current_xp"] = 0
+	var wf := FileAccess.open(tmp_v3, FileAccess.WRITE)
+	wf.store_string(JSON.stringify(raw))
+	wf.close()
+
+	var p2 := _make_test_player(world)
+	assert_true(ss.load_game(p2, tmp_v3), "tampered v3 load succeeds")
+	assert_eq(int(p2.sword_level), 1, "tampered level loaded verbatim")
+	assert_eq(str(p2.evolution_manager.current_form_id), "wood_mineral_copper_root", "PERMANENT choice survives: form NOT reconstructed from level")
+	assert_true(p2.evolution_manager.is_form_discarded("wood_charred_ash_thorn"), "discarded branches survive reload")
+	assert_true(p2.evolution_manager.evolution_history.size() >= 2, "evolution history survives reload")
+
+	# Legacy v2 payload (no evolution_state) migrates with a level-mapped initial state
+	var v2_payload := {
+		"version": 2, "sword_level": 21, "current_xp": 0, "gold": 100, "kills": 3,
+		"wave": 2, "wave_kills": 1, "wielder_mode": "living_sword",
+		"upgrades": {"sharpness": 1}, "bosses_defeated": 1,
+	}
+	var tmp_v2 := "user://unit_test_save_v2_migration.json"
+	var wf2 := FileAccess.open(tmp_v2, FileAccess.WRITE)
+	wf2.store_string(JSON.stringify(v2_payload))
+	wf2.close()
+	var p3 := _make_test_player(world)
+	assert_true(ss.load_game(p3, tmp_v2), "v2 payload migrates into v3")
+	assert_eq(str(p3.evolution_manager.current_form_id), "blessed_auric_bastion_claymore", "v2 migration maps level-appropriate initial form")
+	assert_true(int((p3.evolution_manager.evolution_history[0] as Dictionary).get("migrated_from_v2", 0)) == 1, "migration flagged in evolution history")
+	assert_true(p3.evolution_manager.has_world_event("defeated_malakor"), "v2 boss history becomes world event")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(tmp_v3))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(tmp_v2))
+	world.free()
+	ss.free()
+
+func test_player_evolution_integration() -> void:
+	var world := Node3D.new()
+	root.add_child(world)
+	var p := _make_test_player(world)
+	assert_true(p.evolution_manager != null and p.skill_manager != null, "player evolution & skill managers initialized")
+	assert_eq(str(p.current_tier.get("form_id", "")), "wood_origin_ancestral_blade", "player starts as Stage 01 pilot form")
+	assert_eq(int(p.stats["max_energy"]), 100, "energy baseline from form stats")
+	var e0 := float(p.energy)
+	p.perform_skill("whirlwind")
+	assert_true(float(p.energy) < e0, "active skill drains spiritual energy")
+	var pts0 := int(p.skill_manager.skill_points)
+	p.add_xp(120)
+	assert_true(p.sword_level >= 3, "leveled up via XP")
+	assert_true(int(p.skill_manager.skill_points) > pts0, "skill points granted on level up")
+	assert_eq(str(p.evolution_manager.current_form_id), "wood_origin_ancestral_blade", "no auto form change from level")
+	p.add_material("slime_gel", 2)
+	var res := p.try_evolve("wood_mineral_copper_root")
+	assert_true(bool(res.get("ok", false)), "player.try_evolve commits permanent evolution")
+	assert_eq(str(p.current_tier.get("id", "")), "copper", "legacy view id switches to copper alias")
+	assert_true(int(p.stats["damage"]) > 0, "stats recalculated for the new form")
+	var ess0 := int(p.evolution_manager.evolution_xp)
+	p.add_kill()
+	assert_true(int(p.evolution_manager.evolution_xp) > ess0, "kills grant evolution essence")
+	assert_eq(str(p.evolution_manager.get_current_lineage()), str(p.evolution_manager.catalog.get_form("wood_mineral_copper_root").get("lineage", "")), "current lineage matches committed form lineage")
+	world.free()
+
+func test_evolution_skill_ui_panels() -> void:
+	var world := Node3D.new()
+	root.add_child(world)
+	var p := _make_test_player(world)
+	var hud = load("res://scripts/HUD.gd").new()
+	root.add_child(hud)
+	hud.connect_player(p)
+	assert_true(hud.evolution_panel != null and hud.skill_panel != null, "Evolution & Skill modal panels built")
+	assert_true(not hud.evolution_panel.visible and not hud.skill_panel.visible, "new modals hidden by default")
+	hud._toggle_evolution()
+	assert_true(hud.evolution_panel.visible, "Evolution modal opens via toggle")
+	assert_true(hud.evolution_list_vb.get_child_count() > 0, "Evolution rows populated")
+	var era1_count: int = p.evolution_manager.catalog.get_forms_for_era(1).size()
+	assert_eq(hud.evolution_list_vb.get_child_count(), era1_count, "Era I rows match catalog forms")
+	hud._toggle_skill_tree()
+	assert_true(hud.skill_panel.visible and not hud.evolution_panel.visible, "Skill modal replaces Evolution modal")
+	var tree_skills: int = p.skill_manager.catalog.get_skills_for_tree("physical_mastery").size()
+	assert_eq(hud.skill_list_vb.get_child_count(), tree_skills, "Skill rows match catalog tree")
+	hud._close_sub_modals()
+	assert_true(not hud.skill_panel.visible and not hud.evolution_panel.visible, "_close_sub_modals closes the new modals")
+	hud.ui_root.size = Vector2(1280, 720)
+	hud._layout_responsive()
+	for pair in [["Evolution", hud.evolution_panel], ["SkillTree", hud.skill_panel]]:
+		var ov: Control = pair[1]
+		var ok: bool = ov.position.x >= 16.0 and ov.position.y >= 16.0 and (ov.position.x + ov.size.x) <= 1264.0 and (ov.position.y + ov.size.y) <= 704.0
+		assert_true(ok, "Modal %s fits cleanly at 1280x720" % str(pair[0]))
+	# Evolution rows rebuild after committing a permanent evolution in-game
+	hud._toggle_evolution()
+	assert_true(hud.evolution_panel.visible, "Evolution modal reopens")
+	hud._close_sub_modals()
+	hud.free()
+	world.free()
 

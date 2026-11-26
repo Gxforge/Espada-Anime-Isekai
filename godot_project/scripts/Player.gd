@@ -64,6 +64,15 @@ var _potion_key_was_down: bool = false
 var current_tier: Dictionary
 var stats: Dictionary
 
+# v3 Permanent Evolution & 72-Skill systems (data-driven, saved verbatim in save v3)
+var evolution_manager: EvolutionManager
+var skill_manager: SkillTreeManager
+var energy: float = 100.0
+
+func _init() -> void:
+	evolution_manager = EvolutionManager.new()
+	skill_manager = SkillTreeManager.new()
+
 @onready var sword_pivot: Node3D = get_node_or_null("SwordPivot")
 @onready var sword_mesh_holder: Node3D = get_node_or_null("SwordPivot/SwordMeshHolder")
 @onready var knight_holder: Node3D = get_node_or_null("KnightHolder")
@@ -90,9 +99,10 @@ func _exit_tree() -> void:
 
 func _ready() -> void:
 	var gd := _get_gamedata()
-	current_tier = gd.get_sword_for_level(sword_level)
+	current_tier = evolution_manager.get_legacy_tier_view()
 	_ensure_ground_aura_ring()
 	_recalc_stats()
+	energy = float(stats.get("max_energy", 100.0))
 	player_hp = player_max_hp
 	_refresh_sword_visual()
 	_init_sfx()
@@ -164,6 +174,8 @@ func _tick_cooldowns(delta: float) -> void:
 		attack_anim = max(0.0, attack_anim - delta)
 	if dash_timer > 0.0:
 		dash_timer = max(0.0, dash_timer - delta)
+	# Spiritual energy regeneration (17-stat schema)
+	energy = minf(float(stats.get("max_energy", 100.0)), energy + float(stats.get("energy_regen", 8.0)) * delta)
 	cooldowns_changed.emit(cooldowns)
 
 func _handle_movement(delta: float) -> void:
@@ -291,6 +303,8 @@ func _canonical_skill(skill: String) -> String:
 func get_effective_cd_max(skill: String) -> float:
 	skill = _canonical_skill(skill)
 	var base: float = float(cd_max.get(skill, 4.0))
+	if skill_manager != null and skill_manager.catalog.has_skill(skill):
+		base = float(skill_manager.catalog.get_skill(skill).get("cooldown", base))
 	var cdr: float = clampf(float(stats.get("cd_reduction", 0.0)), 0.0, 0.45)
 	return maxf(0.4, base * (1.0 - cdr))
 
@@ -300,9 +314,20 @@ func perform_skill(skill: String) -> void:
 	skill = _canonical_skill(skill)
 	if cooldowns.get(skill, 0.0) > 0.0:
 		return
+	# Skill-tree gating: only learned skills can be performed (whirlwind/swordWave/
+	# ultimate/dash are starter skills; the other 68 are learned via the tree).
+	if skill_manager != null and not skill_manager.is_unlocked(skill):
+		log_added.emit("'%s' aún no se ha aprendido en el Árbol de Habilidades [K]." % skill, "ui")
+		return
+	var sdef: Dictionary = skill_manager.catalog.get_skill(skill) if skill_manager != null else {}
+	var energy_cost := float(sdef.get("energy_cost", 0.0))
+	if energy < energy_cost:
+		log_added.emit("Energía espiritual insuficiente para %s." % skill, "ui")
+		return
 	var eff_cd := get_effective_cd_max(skill)
 	var aura_col: Color = current_tier.get("aura_color", Color("#86efac"))
 	var slash_col: Color = current_tier.get("slash_color", Color("#d4a373"))
+	var acted := false
 	match skill:
 		"whirlwind":
 			cooldowns["whirlwind"] = eff_cd
@@ -311,18 +336,21 @@ func perform_skill(skill: String) -> void:
 			_spawn_shockwave(global_position, aura_col, float(stats["range"]) * 1.4)
 			play_sfx("skill_q")
 			log_added.emit("¡Torbellino desatado!", "skill")
+			acted = true
 		"swordWave":
 			cooldowns["swordWave"] = eff_cd
 			_spawn_wave_projectile()
 			_spawn_shockwave(global_position + Vector3(sin(rotation.y), 0, cos(rotation.y)) * 1.5, slash_col, 3.0)
 			play_sfx("skill_e")
 			log_added.emit("¡Onda Cortante lanzada!", "skill")
+			acted = true
 		"ultimate":
 			cooldowns["ultimate"] = eff_cd
 			_spawn_ultimate_swords()
 			_spawn_shockwave(global_position, aura_col, 6.0)
 			play_sfx("skill_r")
 			log_added.emit("¡Lluvia de Espadas Celestiales!", "skill")
+			acted = true
 		"dash":
 			cooldowns["dash"] = eff_cd
 			dash_timer = 0.22
@@ -330,9 +358,33 @@ func perform_skill(skill: String) -> void:
 			dash_dir = Vector3(sin(rotation.y), 0, cos(rotation.y))
 			_spawn_shockwave(global_position, Color("#38bdf8"), 2.4)
 			play_sfx("dash")
+			acted = true
 		_:
-			return
-	cooldowns_changed.emit(cooldowns)
+			# Data-driven catalog skill: route by combat_archetype so every learned
+			# skill has real combat behavior without hard-coding all 72.
+			var arch := str(sdef.get("combat_archetype", "projectile"))
+			cooldowns[skill] = eff_cd
+			match arch:
+				"shockwave", "nova":
+					whirlwind_timer = 0.9
+					whirlwind_tick = 0.0
+					_spawn_shockwave(global_position, aura_col, float(sdef.get("effect_data", {}).get("radius", 4.0)))
+					play_sfx("skill_q")
+				"mobility":
+					dash_timer = 0.22
+					invuln_timer = maxf(invuln_timer, 0.25)
+					dash_dir = Vector3(sin(rotation.y), 0, cos(rotation.y))
+					_spawn_shockwave(global_position, Color("#38bdf8"), 2.4)
+					play_sfx("dash")
+				_:
+					_spawn_wave_projectile()
+					_spawn_shockwave(global_position + Vector3(sin(rotation.y), 0, cos(rotation.y)) * 1.5, slash_col, 3.0)
+					play_sfx("skill_e")
+			log_added.emit("¡%s activada!" % str(sdef.get("name", skill)), "skill")
+			acted = true
+	if acted:
+		energy = maxf(0.0, energy - energy_cost)
+		cooldowns_changed.emit(cooldowns)
 
 func _apply_melee_damage() -> void:
 	if not is_inside_tree():
@@ -464,26 +516,24 @@ func gain_experience(amount: int) -> void:
 	var gd := _get_gamedata()
 	current_xp += maxi(0, amount)
 	var required: int = int(gd.get_xp_required(sword_level))
-	var old_tier := current_tier
-	var leveled := false
+	var levels_gained := 0
 	while current_xp >= required:
 		current_xp -= required
 		sword_level += 1
 		required = int(gd.get_xp_required(sword_level))
-		leveled = true
-	if leveled:
-		current_tier = gd.get_sword_for_level(sword_level)
+		levels_gained += 1
+	if levels_gained > 0:
+		# Permanent branching system: level-ups grant Skill Points and Evolution Essence.
+		# The sword FORM only changes through manual permanent commits (try_evolve),
+		# so branching decisions always belong to the player — never to raw level.
+		if skill_manager != null:
+			skill_manager.add_skill_points(levels_gained)
+		if evolution_manager != null:
+			evolution_manager.add_evolution_xp(levels_gained * 25)
 		_recalc_stats()
 		player_hp = player_max_hp
-		_refresh_sword_visual()
-		var evolved := str(current_tier["id"]) != str(old_tier.get("id", ""))
-		if evolved:
-			play_sfx("evolution", 1.0, 1.0)
-			log_added.emit("¡METAMORFOSIS AL NIVEL %d! Tu espada ha evolucionado a %s." % [sword_level, str(current_tier["name"]).to_upper()], "evolution")
-			evolution_changed.emit(current_tier)
-		else:
-			play_sfx("levelup", 1.0, 1.0)
-			log_added.emit("¡Tu espada subió al Nivel %d! El filo y poder aumentan." % sword_level, "levelup")
+		play_sfx("levelup", 1.0, 1.0)
+		log_added.emit("¡Nivel %d! +%d Punto(s) de Habilidad [K] y +%d Esencia Evolutiva [T]." % [sword_level, levels_gained, levels_gained * 25], "levelup")
 		hp_changed.emit(player_hp, player_max_hp)
 	xp_changed.emit(current_xp, int(gd.get_xp_required(sword_level)), sword_level)
 
@@ -495,6 +545,9 @@ func add_kill() -> void:
 	kills += 1
 	wave_kills += 1
 	kills_changed.emit(kills)
+	# Every defeated monster feeds the sword's permanent Evolution Essence
+	if evolution_manager != null:
+		evolution_manager.add_evolution_xp(3)
 	if wave_kills >= 8:
 		wave_kills = 0
 		wave += 1
@@ -694,21 +747,20 @@ func use_consumable(cons_id: String) -> bool:
 
 func jump_to_level(target_level: int) -> void:
 	var gd := _get_gamedata()
-	var old_tier := current_tier
+	var old_level := sword_level
 	sword_level = max(1, target_level)
 	current_xp = 0
-	current_tier = gd.get_sword_for_level(sword_level)
+	var gained := sword_level - old_level
+	# Debug/level jump: grant the same rewards real level-ups would (form stays committed!)
+	if gained > 0 and skill_manager != null:
+		skill_manager.add_skill_points(gained)
+	if gained > 0 and evolution_manager != null:
+		evolution_manager.add_evolution_xp(gained * 25)
 	_recalc_stats()
 	player_hp = player_max_hp
 	_refresh_sword_visual()
-	var evolved := str(current_tier["id"]) != str(old_tier.get("id", ""))
-	if evolved:
-		play_sfx("evolution", 1.0, 1.0)
-		log_added.emit("¡EVOLUCIÓN ACTIVADA (Nivel %d): %s!" % [sword_level, str(current_tier["name"])], "evolution")
-		evolution_changed.emit(current_tier)
-	else:
-		play_sfx("levelup", 1.0, 1.0)
-		log_added.emit("Nivel de la espada ajustado a Nivel %d." % sword_level, "levelup")
+	play_sfx("levelup", 1.0, 1.0)
+	log_added.emit("Nivel de la espada ajustado a Nivel %d. La forma permanente no cambia." % sword_level, "levelup")
 	hp_changed.emit(player_hp, player_max_hp)
 	xp_changed.emit(current_xp, int(gd.get_xp_required(sword_level)), sword_level)
 
@@ -722,6 +774,42 @@ func toggle_wielder_mode() -> void:
 	_refresh_sword_visual()
 	play_sfx("ui")
 	log_added.emit("Modo Portador: %s" % ("Caballero 3D" if wielder_mode == "knight_wielder" else "Espada Viviente"), "upgrade")
+
+# --- PERMANENT EVOLUTION API (v3 branching system) ---
+
+func get_evolution_context() -> Dictionary:
+	return {
+		"sword_level": sword_level,
+		"materials": materials,
+		"unlocked_skills": skill_manager.unlocked_skills if skill_manager != null else {},
+	}
+
+## Commits a PERMANENT, non-reversible evolution to a direct child form.
+## Unchosen sibling branches are sealed forever; history and materials are updated.
+func try_evolve(target_form_id: String) -> Dictionary:
+	if evolution_manager == null:
+		return {"ok": false, "reasons": ["Sistema de evolución no inicializado."]}
+	var res := evolution_manager.commit_permanent_evolution(target_form_id, get_evolution_context(), materials)
+	if bool(res.get("ok", false)):
+		current_tier = evolution_manager.get_legacy_tier_view()
+		_recalc_stats()
+		player_hp = player_max_hp
+		_refresh_sword_visual()
+		play_sfx("evolution", 1.0, 1.0)
+		var nf: Dictionary = res.get("new_form", {})
+		log_added.emit("¡EVOLUCIÓN PERMANENTE! %s (Etapa %02d, Era %d). Las ramas no elegidas quedan selladas para siempre." % [str(nf.get("name", "")), int(nf.get("stage", 0)), int(nf.get("era", 0))], "evolution")
+		evolution_changed.emit(current_tier)
+		hp_changed.emit(player_hp, player_max_hp)
+		xp_changed.emit(current_xp, _get_gamedata().get_xp_required(sword_level), sword_level)
+	else:
+		var reasons: Array = res.get("reasons", ["Condiciones incompletas."])
+		var joined := ", ".join(PackedStringArray(reasons.map(func(r): return str(r))))
+		log_added.emit("Evolución bloqueada: %s" % joined, "ui")
+	return res
+
+func add_evolution_essence(amount: int) -> void:
+	if evolution_manager != null:
+		evolution_manager.add_evolution_xp(maxi(0, amount))
 
 func _get_relic_bonuses() -> Dictionary:
 	var gd := _get_gamedata()
@@ -752,28 +840,58 @@ func _get_relic_bonuses() -> Dictionary:
 
 func _recalc_stats() -> void:
 	var gd := _get_gamedata()
-	current_tier = gd.get_sword_for_level(sword_level)
 	var rb := _get_relic_bonuses()
 
-	player_max_hp = 220 + (sword_level - 1) * 28 + int(rb["max_hp_bonus"])
+	# v3: the authoritative form comes from the permanent EvolutionManager state
+	if evolution_manager != null:
+		current_tier = evolution_manager.get_legacy_tier_view()
+	var form_def: Dictionary = evolution_manager.get_current_form() if evolution_manager != null else {}
+	if form_def.is_empty():
+		form_def = gd.get_sword_for_level(sword_level)
+
+	var passive_mods: Dictionary = skill_manager.get_aggregated_passive_modifiers(str(form_def.get("lineage", ""))) if skill_manager != null else {}
+
+	# Map forge upgrades & relics into the 17-attribute calculator vocabulary
+	var calc_upgrades := {
+		"sharpness": float(upgrades.get("sharpness", 0)),
+		"swiftness": float(upgrades.get("swiftness", 0)),
+		"reach": float(upgrades.get("bladeSize", 0)),
+		"vitality": float(upgrades.get("vampirism", 0)),
+		"fortune": float(upgrades.get("criticalMastery", 0)),
+	}
+	var relic_calc := {
+		"damage_pct": float(rb.get("dmg_mult", 0.0)),
+		"attack_speed": float(rb.get("atk_speed_mult", 0.0)),
+		"crit_chance": float(rb.get("crit_chance", 0.0)),
+		"max_hp": float(rb.get("max_hp_bonus", 0.0)),
+		"lifesteal": float(rb.get("life_on_hit", 0)) * 0.004,
+		"move_speed": 0.0,
+		"cd_reduction": float(rb.get("cd_reduction", 0.0)),
+		"xp_bonus": float(rb.get("xp_mult", 0.0)),
+		"gold_bonus": float(rb.get("gold_mult", 0.0)),
+		"range": 0.0,
+	}
+	var calc: Dictionary = SwordStatsCalculator.calculate_stats(form_def, sword_level, calc_upgrades, relic_calc, passive_mods)
+
+	# Legacy multiplier semantics preserved on top of the 17-stat base
+	var rng := float(calc["attack_range"]) * (1.0 + int(upgrades.get("bladeSize", 0)) * 0.06 + float(rb.get("range_mult", 0.0)))
+	var crit_mult: float = float(calc.get("crit_damage", 1.85)) + int(upgrades.get("criticalMastery", 0)) * 0.15 + float(rb.get("crit_mult", 0.0))
+	if str(form_def.get("special_effect", "")) == "cosmic_nova":
+		crit_mult += 0.65
+	var life_on_hit := int(upgrades.get("vampirism", 0)) * 3 + (14 if str(form_def.get("special_effect", "")) == "lifesteal_magma" else 0) + int(rb.get("life_on_hit", 0))
+	var xp_mult := 1.0 + int(upgrades.get("soulMagnet", 0)) * 0.15 + float(rb.get("xp_mult", 0.0)) + float(calc.get("soul_absorption", 0.0))
+	var gold_mult: float = float(calc.get("gold_mult", 1.0)) + float(rb.get("gold_mult", 0.0))
+	var cdr := clampf(float(calc.get("cdr", 0.0)) + float(rb.get("cd_reduction", 0.0)), 0.0, 0.45)
+
+	# Wielder vitality constant keeps the classic 220 HP baseline on the Stage 01 form
+	player_max_hp = int(round(float(calc.get("max_hp", 120.0)) + 100.0))
 	player_hp = clampi(player_hp, 0 if is_dead else 1, player_max_hp)
 
-	var level_bonus := 1.0 + (sword_level - int(current_tier["min_level"])) * 0.14
-	var sharp_mult := 1.0 + int(upgrades["sharpness"]) * 0.18 + float(rb["dmg_mult"])
-	var dmg := int(round(float(current_tier["base_damage"]) * level_bonus * sharp_mult))
-	var atk_speed := float(current_tier["attack_speed"]) * (1.0 + int(upgrades["swiftness"]) * 0.08 + float(rb["atk_speed_mult"]))
-	var crit: float = minf(0.95, float(current_tier["crit_chance"]) + int(upgrades["criticalMastery"]) * 0.04 + float(rb["crit_chance"]))
-	var crit_mult := 1.85 + int(upgrades["criticalMastery"]) * 0.15 + (0.65 if str(current_tier["id"]) == "celestial" else 0.0) + float(rb["crit_mult"])
-	var rng := float(current_tier["range"]) * (1.0 + int(upgrades["bladeSize"]) * 0.06 + float(rb["range_mult"]))
-	var life_on_hit := int(upgrades["vampirism"]) * 3 + (14 if str(current_tier["id"]) == "obsidian" else 0) + int(rb["life_on_hit"])
-	var xp_mult := 1.0 + int(upgrades["soulMagnet"]) * 0.15 + (0.15 if str(current_tier["id"]) == "wood" else 0.0) + float(rb["xp_mult"])
-	var gold_mult := 1.0 + int(upgrades["soulMagnet"]) * 0.12 + float(rb["gold_mult"])
-	var cdr := clampf(float(rb["cd_reduction"]), 0.0, 0.45)
-
 	stats = {
-		"damage": dmg,
-		"attack_speed": atk_speed,
-		"crit_chance": crit,
+		# Legacy combat keys (100% backward compatible)
+		"damage": int(calc["damage"]),
+		"attack_speed": float(calc["attack_speed"]),
+		"crit_chance": float(calc["crit_chance"]),
 		"crit_mult": crit_mult,
 		"range": rng,
 		"life_on_hit": life_on_hit,
@@ -781,6 +899,21 @@ func _recalc_stats() -> void:
 		"gold_mult": gold_mult,
 		"cd_reduction": cdr,
 		"max_hp_bonus": int(rb["max_hp_bonus"]),
+		# Full 17-attribute schema
+		"physical_damage": float(calc["physical_damage"]),
+		"elemental_damage": float(calc["elemental_damage"]),
+		"attack_range": float(calc["attack_range"]),
+		"crit_damage": float(calc["crit_damage"]),
+		"armor_penetration": float(calc["armor_penetration"]),
+		"life_steal": float(calc["life_steal"]),
+		"defense": float(calc["defense"]),
+		"elemental_resistance": float(calc["elemental_resistance"]),
+		"energy_regen": float(calc["energy_regen"]),
+		"max_energy": int(calc["max_energy"]),
+		"move_speed": float(calc["move_speed"]),
+		"cdr": float(calc["cdr"]),
+		"status_chance": float(calc["status_chance"]),
+		"soul_absorption": float(calc["soul_absorption"]),
 	}
 
 func _refresh_sword_visual() -> void:

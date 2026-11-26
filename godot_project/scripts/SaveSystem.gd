@@ -1,7 +1,7 @@
 extends Node
 
 const SAVE_PATH := "user://savegame.json"
-const SAVE_VERSION := 2
+const SAVE_VERSION := 3
 
 var settings := {
 	"quality": "medium",
@@ -32,6 +32,15 @@ func serialize_player(player: Node) -> Dictionary:
 	if player.get("consumables") != null:
 		cons = player.consumables.duplicate(true)
 
+	# v3: permanent evolution & skill progression are stored verbatim and NEVER
+	# reconstructed from player level alone.
+	var evo_state := {}
+	if player.get("evolution_manager") != null and player.evolution_manager != null:
+		evo_state = player.evolution_manager.to_dict()
+	var skill_state := {}
+	if player.get("skill_manager") != null and player.skill_manager != null:
+		skill_state = player.skill_manager.to_dict()
+
 	return {
 		"version": SAVE_VERSION,
 		"sword_level": int(player.sword_level),
@@ -50,6 +59,8 @@ func serialize_player(player: Node) -> Dictionary:
 		"equipped": eq,
 		"consumables": cons,
 		"bosses_defeated": int(player.get("bosses_defeated") if player.get("bosses_defeated") != null else 0),
+		"evolution_state": evo_state,
+		"skill_state": skill_state,
 		"settings": settings.duplicate(true),
 	}
 
@@ -85,7 +96,8 @@ func load_game(player: Node, custom_path: String = SAVE_PATH) -> bool:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		push_warning("SaveSystem: invalid save file")
 		return false
-	var d: Dictionary = parsed
+	# Migrate v1/v2 payloads up to the current v3 schema before applying
+	var d: Dictionary = SaveMigration.migrate_save_dict(parsed)
 	if d.has("settings"):
 		_apply_settings(d.get("settings", {}))
 	# Only apply player progression if save actually contains player data (not a settings-only file)
@@ -111,7 +123,7 @@ func _apply_to_player(player: Node, d: Dictionary) -> void:
 			if upg.has(k):
 				player.upgrades[k] = clampi(int(upg[k]), 0, 10)
 
-	# RPG inventory migration-safe load (v1 & v2)
+	# RPG inventory migration-safe load (v1, v2 & v3)
 	if player.get("materials") != null:
 		player.materials.clear()
 		var mats = d.get("materials", {})
@@ -150,10 +162,23 @@ func _apply_to_player(player: Node, d: Dictionary) -> void:
 	if "bosses_defeated" in player:
 		player.bosses_defeated = maxi(0, int(d.get("bosses_defeated", 0)))
 
+	# v3: restore permanent evolution state & skill progression.
+	# If a v3 evolution_state exists it is applied VERBATIM: permanent branch choices,
+	# evolution history and discarded sibling forms are never re-derived from level.
+	if player.get("evolution_manager") != null and player.evolution_manager != null:
+		player.evolution_manager.from_dict(d.get("evolution_state", {}))
+		if int(player.get("bosses_defeated")) > 0:
+			player.evolution_manager.record_world_event("defeated_malakor")
+	if player.get("skill_manager") != null and player.skill_manager != null:
+		player.skill_manager.from_dict(d.get("skill_state", {}))
+
 	var gd = get_node_or_null("/root/GameData") if is_inside_tree() else null
 	if gd == null and player.has_method("_get_gamedata"):
 		gd = player._get_gamedata()
-	if gd:
+	# Authoritative form comes from the persisted evolution state (not from level)
+	if player.get("evolution_manager") != null and player.evolution_manager != null:
+		player.current_tier = player.evolution_manager.get_legacy_tier_view()
+	elif gd:
 		player.current_tier = gd.get_sword_for_level(player.sword_level)
 	player._recalc_stats()
 	var saved_hp := int(d.get("player_hp", player.player_max_hp))
