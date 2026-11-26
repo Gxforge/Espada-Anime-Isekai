@@ -356,6 +356,15 @@ STAGE04_GLB = {
     "awakening_runebark_codex_blade": "res://assets/models/swords/runebark_codex/sword_04_runebark_codex.glb",
 }
 
+# Bespoke Stage-05 GLBs verified in Godot 4.4 (Studio Lexair approved production batch)
+STAGE05_GLB = {
+    "blessed_solar_initiate_blade": "res://assets/models/swords/solar_initiate/sword_05_solar_initiate.glb",
+    "cursed_obsidian_fang_blade": "res://assets/models/swords/obsidian_fang/sword_05_obsidian_fang.glb",
+    "elemental_tempest_copper_blade": "res://assets/models/swords/copper_tempest/sword_05_copper_tempest.glb",
+    "spiritual_silver_anima_saber": "res://assets/models/swords/silver_anima/sword_05_silver_anima.glb",
+    "arcane_crystal_cipher_sword": "res://assets/models/swords/crystal_cipher/sword_05_crystal_cipher.glb",
+}
+
 STAGE_TITLES = {
     # Era I: Despertar (01-04)
     1: [
@@ -620,9 +629,9 @@ for st, entries in STAGE_TITLES.items():
             "aura_color": lmeta["aura_color"],
             "slash_color": lmeta["slash_color"],
             "special_effect": lmeta["special_effect"],
-            "model_path": (STAGE04_GLB[fid] if fid in STAGE04_GLB else STAGE03_GLB.get(fid, STAGE02_GLB.get(fid, "res://assets/models/swords/wood_ancestral/sword_01_wood_ancestral.glb" if is_pilot else lmeta["legacy_model"]))),
-            "model_status": ("verified_stage04_glb" if fid in STAGE04_GLB else ("verified_stage03_glb" if fid in STAGE03_GLB else ("verified_stage02_glb" if fid in STAGE02_GLB else ("verified_pilot_glb" if is_pilot else "extensible_blueprint_pending_3d")))),
-            "catalog_status": ("canon_approved_stage04" if fid in STAGE04_GLB else ("canon_approved_stage03" if fid in STAGE03_GLB else ("canon_approved_stage02" if fid in STAGE02_GLB else ("canon_approved_pilot" if is_pilot else "extensible_framework_node")))),
+            "model_path": (STAGE05_GLB[fid] if fid in STAGE05_GLB else STAGE04_GLB.get(fid, STAGE03_GLB.get(fid, STAGE02_GLB.get(fid, "res://assets/models/swords/wood_ancestral/sword_01_wood_ancestral.glb" if is_pilot else lmeta["legacy_model"])))),
+            "model_status": ("verified_stage05_glb" if fid in STAGE05_GLB else ("verified_stage04_glb" if fid in STAGE04_GLB else ("verified_stage03_glb" if fid in STAGE03_GLB else ("verified_stage02_glb" if fid in STAGE02_GLB else ("verified_pilot_glb" if is_pilot else "extensible_blueprint_pending_3d"))))),
+            "catalog_status": ("canon_approved_stage05" if fid in STAGE05_GLB else ("canon_approved_stage04" if fid in STAGE04_GLB else ("canon_approved_stage03" if fid in STAGE03_GLB else ("canon_approved_stage02" if fid in STAGE02_GLB else ("canon_approved_pilot" if is_pilot else "extensible_framework_node"))))),
             "parent_forms": [],
             "next_forms": [],
         }
@@ -665,9 +674,9 @@ for st in range(5, 25):
             "aura_color": lmeta["aura_color"],
             "slash_color": lmeta["slash_color"],
             "special_effect": lmeta["special_effect"],
-            "model_path": lmeta["legacy_model"],
-            "model_status": "extensible_blueprint_pending_3d",
-            "catalog_status": "extensible_framework_node",
+            "model_path": (STAGE05_GLB.get(fid, STAGE04_GLB.get(fid, STAGE03_GLB.get(fid, STAGE02_GLB.get(fid, lmeta["legacy_model"]))))),
+            "model_status": ("verified_stage05_glb" if fid in STAGE05_GLB else ("verified_stage04_glb" if fid in STAGE04_GLB else ("verified_stage03_glb" if fid in STAGE03_GLB else ("verified_stage02_glb" if fid in STAGE02_GLB else "extensible_blueprint_pending_3d")))),
+            "catalog_status": ("canon_approved_stage05" if fid in STAGE05_GLB else ("canon_approved_stage04" if fid in STAGE04_GLB else ("canon_approved_stage03" if fid in STAGE03_GLB else ("canon_approved_stage02" if fid in STAGE02_GLB else "extensible_framework_node")))),
             "parent_forms": [],
             "next_forms": [],
         }
