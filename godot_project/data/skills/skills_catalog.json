@@ -1,0 +1,1790 @@
+{
+  "schema_version": 1,
+  "trees": [
+    {
+      "id": "physical_mastery",
+      "name": "Dominio Físico",
+      "icon": "⚔",
+      "color": "#f97316",
+      "description": "Técnicas de tajo, estocada quebrantahuesos, torbellinos de acero vivo y ejecución crítica."
+    },
+    {
+      "id": "elemental_magic",
+      "name": "Magia Elemental",
+      "icon": "✦",
+      "color": "#38bdf8",
+      "description": "Canalización de llama solar, escarcha cristalina, relámpago voltaico y tormentas primordiales."
+    },
+    {
+      "id": "spiritual_energy",
+      "name": "Energía Espiritual",
+      "icon": "★",
+      "color": "#34d399",
+      "description": "Levitación astral, cosecha de esencias de alma, pasos etéreos y proyección de hojas fantasma."
+    },
+    {
+      "id": "defense_survival",
+      "name": "Defensa y Supervivencia",
+      "icon": "❖",
+      "color": "#eab308",
+      "description": "Égidas de corteza férrea, contragolpes sagrados, regeneración de savia vital y resistencia indomable."
+    },
+    {
+      "id": "curses_absorption",
+      "name": "Maldiciones y Absorción",
+      "icon": "☠",
+      "color": "#f43f5e",
+      "description": "Drenaje sanguíneo, heridas abisales, devoración de esencia enemiga y pactos de alto riesgo."
+    },
+    {
+      "id": "legendary_powers",
+      "name": "Poderes Legendarios",
+      "icon": "♛",
+      "color": "#c084fc",
+      "description": "Artes soberanas de era superior, lluvia de espadas celestiales, dominios arcanos y apoteosis."
+    }
+  ],
+  "skills": [
+    {
+      "id": "whirlwind",
+      "name": "Torbellino de Filo Vivo",
+      "tree_id": "physical_mastery",
+      "tree_name": "Dominio Físico",
+      "type": "active",
+      "tier": 1,
+      "order_in_tree": 1,
+      "min_stage": 1,
+      "cost_points": 1,
+      "prereq_skills": [],
+      "allowed_lineages": [],
+      "cooldown": 4.0,
+      "energy_cost": 18,
+      "combat_archetype": "shockwave",
+      "effect_data": {
+        "damage_mult": 1.35,
+        "radius": 4.2
+      },
+      "description": "Gira a velocidad sobrehumana cortando a todos los enemigos cercanos."
+    },
+    {
+      "id": "phys_pas_edge",
+      "name": "Memoria del Acero",
+      "tree_id": "physical_mastery",
+      "tree_name": "Dominio Físico",
+      "type": "passive",
+      "tier": 1,
+      "order_in_tree": 2,
+      "min_stage": 1,
+      "cost_points": 1,
+      "prereq_skills": [],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "physical_damage_pct": 0.08
+      },
+      "description": "La consciencia de la hoja afila su propio bisel (+8% Daño Físico)."
+    },
+    {
+      "id": "phys_act_rend",
+      "name": "Tajo Quebrantaguardas",
+      "tree_id": "physical_mastery",
+      "tree_name": "Dominio Físico",
+      "type": "active",
+      "tier": 2,
+      "order_in_tree": 3,
+      "min_stage": 3,
+      "cost_points": 1,
+      "prereq_skills": [
+        "whirlwind"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 5.5,
+      "energy_cost": 22,
+      "combat_archetype": "crimson_cleave",
+      "effect_data": {
+        "damage_mult": 1.75,
+        "armor_shred": 0.15
+      },
+      "description": "Descarga frontal pesada que fractura corazas enemigas."
+    },
+    {
+      "id": "phys_pas_tempo",
+      "name": "Cadencia de Duelo",
+      "tree_id": "physical_mastery",
+      "tree_name": "Dominio Físico",
+      "type": "passive",
+      "tier": 2,
+      "order_in_tree": 4,
+      "min_stage": 3,
+      "cost_points": 1,
+      "prereq_skills": [
+        "phys_pas_edge"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "attack_speed_pct": 0.07
+      },
+      "description": "Equilibra el contrapeso del pomo (+7% Velocidad de Ataque)."
+    },
+    {
+      "id": "phys_act_flurry",
+      "name": "Danza de Siete Cortes",
+      "tree_id": "physical_mastery",
+      "tree_name": "Dominio Físico",
+      "type": "active",
+      "tier": 3,
+      "order_in_tree": 5,
+      "min_stage": 6,
+      "cost_points": 2,
+      "prereq_skills": [
+        "phys_act_rend"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 7.0,
+      "energy_cost": 28,
+      "combat_archetype": "shockwave",
+      "effect_data": {
+        "damage_mult": 2.15,
+        "radius": 4.6
+      },
+      "description": "Desata una ráfaga circular de cortes precisos de alta frecuencia."
+    },
+    {
+      "id": "phys_pas_keen",
+      "name": "Bisel de Precisión",
+      "tree_id": "physical_mastery",
+      "tree_name": "Dominio Físico",
+      "type": "passive",
+      "tier": 3,
+      "order_in_tree": 6,
+      "min_stage": 6,
+      "cost_points": 2,
+      "prereq_skills": [
+        "phys_pas_tempo"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "crit_chance_add": 0.05,
+        "crit_damage_add": 0.15
+      },
+      "description": "Incrementa +5% Crítico y +15% Daño Crítico."
+    },
+    {
+      "id": "phys_act_impale",
+      "name": "Estocada Perforamundos",
+      "tree_id": "physical_mastery",
+      "tree_name": "Dominio Físico",
+      "type": "active",
+      "tier": 4,
+      "order_in_tree": 7,
+      "min_stage": 10,
+      "cost_points": 2,
+      "prereq_skills": [
+        "phys_act_flurry"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 8.0,
+      "energy_cost": 34,
+      "combat_archetype": "wave_projectile",
+      "effect_data": {
+        "damage_mult": 2.55,
+        "speed": 26.0
+      },
+      "description": "Proyecta una lanza de presión física que atraviesa hordas."
+    },
+    {
+      "id": "phys_pas_pen",
+      "name": "Filo Sin Obstáculos",
+      "tree_id": "physical_mastery",
+      "tree_name": "Dominio Físico",
+      "type": "passive",
+      "tier": 4,
+      "order_in_tree": 8,
+      "min_stage": 10,
+      "cost_points": 2,
+      "prereq_skills": [
+        "phys_pas_keen"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "armor_penetration_add": 0.1
+      },
+      "description": "Ignora +10% adicional de la defensa física del objetivo."
+    },
+    {
+      "id": "phys_act_quake",
+      "name": "Impacto Partetierras",
+      "tree_id": "physical_mastery",
+      "tree_name": "Dominio Físico",
+      "type": "active",
+      "tier": 5,
+      "order_in_tree": 9,
+      "min_stage": 15,
+      "cost_points": 3,
+      "prereq_skills": [
+        "phys_act_impale"
+      ],
+      "allowed_lineages": [
+        "blessed",
+        "cursed",
+        "elemental",
+        "hybrid"
+      ],
+      "cooldown": 10.0,
+      "energy_cost": 42,
+      "combat_archetype": "nova_burst",
+      "effect_data": {
+        "damage_mult": 3.1,
+        "radius": 5.8
+      },
+      "description": "Clava el filo en el suelo liberando una onda sísmica devastadora."
+    },
+    {
+      "id": "phys_pas_reach",
+      "name": "Extensión Soberana",
+      "tree_id": "physical_mastery",
+      "tree_name": "Dominio Físico",
+      "type": "passive",
+      "tier": 5,
+      "order_in_tree": 10,
+      "min_stage": 15,
+      "cost_points": 3,
+      "prereq_skills": [
+        "phys_pas_pen"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "attack_range_add": 0.45,
+        "physical_damage_pct": 0.1
+      },
+      "description": "Extiende el alcance físico +0.45 m y +10% Daño Físico."
+    },
+    {
+      "id": "phys_act_exec",
+      "name": "Veredicto del Filo Puro",
+      "tree_id": "physical_mastery",
+      "tree_name": "Dominio Físico",
+      "type": "active",
+      "tier": 6,
+      "order_in_tree": 11,
+      "min_stage": 20,
+      "cost_points": 4,
+      "prereq_skills": [
+        "phys_act_quake"
+      ],
+      "allowed_lineages": [
+        "blessed",
+        "cursed",
+        "hybrid"
+      ],
+      "cooldown": 12.5,
+      "energy_cost": 52,
+      "combat_archetype": "sword_rain",
+      "effect_data": {
+        "damage_mult": 3.85,
+        "strikes": 6
+      },
+      "description": "Ejecución maestra que abate objetivos debilitados con precisión letal."
+    },
+    {
+      "id": "phys_pas_master",
+      "name": "Cénit de la Hoja Viviente",
+      "tree_id": "physical_mastery",
+      "tree_name": "Dominio Físico",
+      "type": "passive",
+      "tier": 6,
+      "order_in_tree": 12,
+      "min_stage": 21,
+      "cost_points": 4,
+      "prereq_skills": [
+        "phys_pas_reach"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "physical_damage_pct": 0.16,
+        "crit_damage_add": 0.25
+      },
+      "description": "Dominio absoluto de la anatomía física (+16% Daño Físico, +25% Daño Crítico)."
+    },
+    {
+      "id": "swordWave",
+      "name": "Onda Cortante Elemental",
+      "tree_id": "elemental_magic",
+      "tree_name": "Magia Elemental",
+      "type": "active",
+      "tier": 1,
+      "order_in_tree": 1,
+      "min_stage": 1,
+      "cost_points": 1,
+      "prereq_skills": [],
+      "allowed_lineages": [],
+      "cooldown": 5.5,
+      "energy_cost": 20,
+      "combat_archetype": "wave_projectile",
+      "effect_data": {
+        "damage_mult": 1.55,
+        "speed": 22.0
+      },
+      "description": "Lanza un arco creciente de energía cortante hacia el frente."
+    },
+    {
+      "id": "elem_pas_spark",
+      "name": "Conducto Primordial",
+      "tree_id": "elemental_magic",
+      "tree_name": "Magia Elemental",
+      "type": "passive",
+      "tier": 1,
+      "order_in_tree": 2,
+      "min_stage": 1,
+      "cost_points": 1,
+      "prereq_skills": [],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "elemental_damage_pct": 0.1
+      },
+      "description": "El núcleo canaliza maná ambiental (+10% Daño Elemental)."
+    },
+    {
+      "id": "elem_act_flare",
+      "name": "Estallido Ígneo",
+      "tree_id": "elemental_magic",
+      "tree_name": "Magia Elemental",
+      "type": "active",
+      "tier": 2,
+      "order_in_tree": 3,
+      "min_stage": 3,
+      "cost_points": 1,
+      "prereq_skills": [
+        "swordWave"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 6.5,
+      "energy_cost": 25,
+      "combat_archetype": "nova_burst",
+      "effect_data": {
+        "damage_mult": 1.85,
+        "radius": 4.5
+      },
+      "description": "Detona una corona de brasas alrededor de la espada."
+    },
+    {
+      "id": "elem_pas_aff",
+      "name": "Afinidad de Tormenta",
+      "tree_id": "elemental_magic",
+      "tree_name": "Magia Elemental",
+      "type": "passive",
+      "tier": 2,
+      "order_in_tree": 4,
+      "min_stage": 4,
+      "cost_points": 1,
+      "prereq_skills": [
+        "elem_pas_spark"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "status_chance_add": 0.08
+      },
+      "description": "Aumenta +8% la probabilidad de aplicar estados elementales."
+    },
+    {
+      "id": "elem_act_frost",
+      "name": "Lanza de Escarcha Cero",
+      "tree_id": "elemental_magic",
+      "tree_name": "Magia Elemental",
+      "type": "active",
+      "tier": 3,
+      "order_in_tree": 5,
+      "min_stage": 6,
+      "cost_points": 2,
+      "prereq_skills": [
+        "elem_act_flare"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 7.5,
+      "energy_cost": 30,
+      "combat_archetype": "wave_projectile",
+      "effect_data": {
+        "damage_mult": 2.25,
+        "speed": 24.0
+      },
+      "description": "Dispara una aguja glacial que entumece a las bestias impactadas."
+    },
+    {
+      "id": "elem_pas_prism",
+      "name": "Refracción Prismática",
+      "tree_id": "elemental_magic",
+      "tree_name": "Magia Elemental",
+      "type": "passive",
+      "tier": 3,
+      "order_in_tree": 6,
+      "min_stage": 7,
+      "cost_points": 2,
+      "prereq_skills": [
+        "elem_pas_aff"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "elemental_resistance_add": 0.08,
+        "elemental_damage_pct": 0.08
+      },
+      "description": "Otorga +8% Resistencia Elemental y +8% Daño Elemental."
+    },
+    {
+      "id": "elem_act_volt",
+      "name": "Tempestad de Fulgurita",
+      "tree_id": "elemental_magic",
+      "tree_name": "Magia Elemental",
+      "type": "active",
+      "tier": 4,
+      "order_in_tree": 7,
+      "min_stage": 10,
+      "cost_points": 2,
+      "prereq_skills": [
+        "elem_act_frost"
+      ],
+      "allowed_lineages": [
+        "elemental",
+        "arcane",
+        "hybrid"
+      ],
+      "cooldown": 8.5,
+      "energy_cost": 36,
+      "combat_archetype": "nova_burst",
+      "effect_data": {
+        "damage_mult": 2.75,
+        "radius": 5.5
+      },
+      "description": "Descarga relámpagos encadenados en todo el perímetro."
+    },
+    {
+      "id": "elem_pas_surge",
+      "name": "Sobrecarga Rúnica",
+      "tree_id": "elemental_magic",
+      "tree_name": "Magia Elemental",
+      "type": "passive",
+      "tier": 4,
+      "order_in_tree": 8,
+      "min_stage": 11,
+      "cost_points": 2,
+      "prereq_skills": [
+        "elem_pas_prism"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "energy_regen_pct": 0.15,
+        "cdr_add": 0.04
+      },
+      "description": "Regenera +15% Energía y reduce enfriamientos 4%."
+    },
+    {
+      "id": "elem_act_magma",
+      "name": "Cataclismo Piroclástico",
+      "tree_id": "elemental_magic",
+      "tree_name": "Magia Elemental",
+      "type": "active",
+      "tier": 5,
+      "order_in_tree": 9,
+      "min_stage": 15,
+      "cost_points": 3,
+      "prereq_skills": [
+        "elem_act_volt"
+      ],
+      "allowed_lineages": [
+        "elemental",
+        "blessed",
+        "hybrid"
+      ],
+      "cooldown": 11.0,
+      "energy_cost": 45,
+      "combat_archetype": "sword_rain",
+      "effect_data": {
+        "damage_mult": 3.3,
+        "strikes": 5
+      },
+      "description": "Invoca pilares ardientes del manto terrestre sobre los enemigos."
+    },
+    {
+      "id": "elem_pas_conv",
+      "name": "Convergencia Tetral",
+      "tree_id": "elemental_magic",
+      "tree_name": "Magia Elemental",
+      "type": "passive",
+      "tier": 5,
+      "order_in_tree": 10,
+      "min_stage": 16,
+      "cost_points": 3,
+      "prereq_skills": [
+        "elem_pas_surge"
+      ],
+      "allowed_lineages": [
+        "elemental",
+        "arcane",
+        "hybrid"
+      ],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "elemental_damage_pct": 0.16,
+        "status_chance_add": 0.1
+      },
+      "description": "Fuego, hielo y rayo resuenan al unísono (+16% Daño Elemental)."
+    },
+    {
+      "id": "elem_act_super",
+      "name": "Supernova de los Cuatro Vientos",
+      "tree_id": "elemental_magic",
+      "tree_name": "Magia Elemental",
+      "type": "active",
+      "tier": 6,
+      "order_in_tree": 11,
+      "min_stage": 20,
+      "cost_points": 4,
+      "prereq_skills": [
+        "elem_act_magma"
+      ],
+      "allowed_lineages": [
+        "elemental",
+        "hybrid"
+      ],
+      "cooldown": 13.5,
+      "energy_cost": 56,
+      "combat_archetype": "nova_burst",
+      "effect_data": {
+        "damage_mult": 4.1,
+        "radius": 7.0
+      },
+      "description": "Explosión elemental suprema que purga el campo de batalla."
+    },
+    {
+      "id": "elem_pas_avatar",
+      "name": "Corazón de Cataclismo",
+      "tree_id": "elemental_magic",
+      "tree_name": "Magia Elemental",
+      "type": "passive",
+      "tier": 6,
+      "order_in_tree": 12,
+      "min_stage": 21,
+      "cost_points": 4,
+      "prereq_skills": [
+        "elem_pas_conv"
+      ],
+      "allowed_lineages": [
+        "elemental",
+        "hybrid"
+      ],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "elemental_damage_pct": 0.22,
+        "armor_penetration_add": 0.08
+      },
+      "description": "Convierte a la espada en un fenómeno natural viviente (+22% Daño Elemental)."
+    },
+    {
+      "id": "dash",
+      "name": "Paso Astral",
+      "tree_id": "spiritual_energy",
+      "tree_name": "Energía Espiritual",
+      "type": "active",
+      "tier": 1,
+      "order_in_tree": 1,
+      "min_stage": 1,
+      "cost_points": 1,
+      "prereq_skills": [],
+      "allowed_lineages": [],
+      "cooldown": 2.4,
+      "energy_cost": 10,
+      "combat_archetype": "dash_strike",
+      "effect_data": {
+        "dash_boost": 1.0
+      },
+      "description": "Desplazamiento instantáneo con breves instantes de intangibilidad."
+    },
+    {
+      "id": "spir_pas_seed",
+      "name": "Resonancia de Reencarnación",
+      "tree_id": "spiritual_energy",
+      "tree_name": "Energía Espiritual",
+      "type": "passive",
+      "tier": 1,
+      "order_in_tree": 2,
+      "min_stage": 1,
+      "cost_points": 1,
+      "prereq_skills": [],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "soul_absorption_add": 0.1,
+        "energy_regen_pct": 0.08
+      },
+      "description": "Aumenta +10% la absorción de Esencia de Alma y +8% regeneración."
+    },
+    {
+      "id": "spir_act_pulse",
+      "name": "Pulso del Árbol Mundo",
+      "tree_id": "spiritual_energy",
+      "tree_name": "Energía Espiritual",
+      "type": "active",
+      "tier": 2,
+      "order_in_tree": 3,
+      "min_stage": 3,
+      "cost_points": 1,
+      "prereq_skills": [
+        "dash"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 6.0,
+      "energy_cost": 22,
+      "combat_archetype": "nova_burst",
+      "effect_data": {
+        "damage_mult": 1.65,
+        "heal_pct": 0.06,
+        "radius": 4.4
+      },
+      "description": "Onda espiritual que daña enemigos y restaura 6% de salud máxima."
+    },
+    {
+      "id": "spir_pas_wind",
+      "name": "Levitación Ligera",
+      "tree_id": "spiritual_energy",
+      "tree_name": "Energía Espiritual",
+      "type": "passive",
+      "tier": 2,
+      "order_in_tree": 4,
+      "min_stage": 4,
+      "cost_points": 1,
+      "prereq_skills": [
+        "spir_pas_seed"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "move_speed_pct": 0.07
+      },
+      "description": "Flujo etéreo sin fricción (+7% Velocidad de Movimiento)."
+    },
+    {
+      "id": "spir_act_echo",
+      "name": "Hojas Eco del Alma",
+      "tree_id": "spiritual_energy",
+      "tree_name": "Energía Espiritual",
+      "type": "active",
+      "tier": 3,
+      "order_in_tree": 5,
+      "min_stage": 6,
+      "cost_points": 2,
+      "prereq_skills": [
+        "spir_act_pulse"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 7.5,
+      "energy_cost": 28,
+      "combat_archetype": "wave_projectile",
+      "effect_data": {
+        "damage_mult": 2.2,
+        "speed": 25.0
+      },
+      "description": "Proyecta réplicas espirituales del filo que persiguen la línea frontal."
+    },
+    {
+      "id": "spir_pas_mind",
+      "name": "Mente Cristalina",
+      "tree_id": "spiritual_energy",
+      "tree_name": "Energía Espiritual",
+      "type": "passive",
+      "tier": 3,
+      "order_in_tree": 6,
+      "min_stage": 7,
+      "cost_points": 2,
+      "prereq_skills": [
+        "spir_pas_wind"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "max_energy_add": 30,
+        "cdr_add": 0.05
+      },
+      "description": "Expande el núcleo consciente (+30 Energía Máx, +5% Reducción CD)."
+    },
+    {
+      "id": "spir_act_lotus",
+      "name": "Floración de Jade Astral",
+      "tree_id": "spiritual_energy",
+      "tree_name": "Energía Espiritual",
+      "type": "active",
+      "tier": 4,
+      "order_in_tree": 7,
+      "min_stage": 10,
+      "cost_points": 2,
+      "prereq_skills": [
+        "spir_act_echo"
+      ],
+      "allowed_lineages": [
+        "spiritual",
+        "blessed",
+        "hybrid"
+      ],
+      "cooldown": 9.0,
+      "energy_cost": 35,
+      "combat_archetype": "nova_burst",
+      "effect_data": {
+        "damage_mult": 2.6,
+        "heal_pct": 0.1,
+        "radius": 5.4
+      },
+      "description": "Despliega pétalos cortantes de ki puro mientras purifica heridas."
+    },
+    {
+      "id": "spir_pas_flow",
+      "name": "Armonía Espada-Portador",
+      "tree_id": "spiritual_energy",
+      "tree_name": "Energía Espiritual",
+      "type": "passive",
+      "tier": 4,
+      "order_in_tree": 8,
+      "min_stage": 11,
+      "cost_points": 2,
+      "prereq_skills": [
+        "spir_pas_mind"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "attack_speed_pct": 0.09,
+        "soul_absorption_add": 0.12
+      },
+      "description": "Sincronía perfecta (+9% Vel. Ataque, +12% Absorción de Alma)."
+    },
+    {
+      "id": "spir_act_zenith",
+      "name": "Cien Filos del Nirvana",
+      "tree_id": "spiritual_energy",
+      "tree_name": "Energía Espiritual",
+      "type": "active",
+      "tier": 5,
+      "order_in_tree": 9,
+      "min_stage": 15,
+      "cost_points": 3,
+      "prereq_skills": [
+        "spir_act_lotus"
+      ],
+      "allowed_lineages": [
+        "spiritual",
+        "arcane",
+        "hybrid"
+      ],
+      "cooldown": 11.5,
+      "energy_cost": 44,
+      "combat_archetype": "sword_rain",
+      "effect_data": {
+        "damage_mult": 3.25,
+        "strikes": 7
+      },
+      "description": "Materializa un enjambre de espadas astrales desde el plano etéreo."
+    },
+    {
+      "id": "spir_pas_trans",
+      "name": "Consciencia Trascendente",
+      "tree_id": "spiritual_energy",
+      "tree_name": "Energía Espiritual",
+      "type": "passive",
+      "tier": 5,
+      "order_in_tree": 10,
+      "min_stage": 16,
+      "cost_points": 3,
+      "prereq_skills": [
+        "spir_pas_flow"
+      ],
+      "allowed_lineages": [
+        "spiritual",
+        "arcane",
+        "hybrid"
+      ],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "cdr_add": 0.07,
+        "energy_regen_pct": 0.2
+      },
+      "description": "Pensamiento acelerado (+7% Reducción CD, +20% Regen Energía)."
+    },
+    {
+      "id": "spir_act_genesis",
+      "name": "Despertar del Alma Primigenia",
+      "tree_id": "spiritual_energy",
+      "tree_name": "Energía Espiritual",
+      "type": "active",
+      "tier": 6,
+      "order_in_tree": 11,
+      "min_stage": 20,
+      "cost_points": 4,
+      "prereq_skills": [
+        "spir_act_zenith"
+      ],
+      "allowed_lineages": [
+        "spiritual",
+        "hybrid"
+      ],
+      "cooldown": 14.0,
+      "energy_cost": 54,
+      "combat_archetype": "nova_burst",
+      "effect_data": {
+        "damage_mult": 3.95,
+        "heal_pct": 0.15,
+        "radius": 6.8
+      },
+      "description": "Libera la totalidad del aura espiritual de la espada reencarnada."
+    },
+    {
+      "id": "spir_pas_eternal",
+      "name": "Vínculo Inmortal",
+      "tree_id": "spiritual_energy",
+      "tree_name": "Energía Espiritual",
+      "type": "passive",
+      "tier": 6,
+      "order_in_tree": 12,
+      "min_stage": 21,
+      "cost_points": 4,
+      "prereq_skills": [
+        "spir_pas_trans"
+      ],
+      "allowed_lineages": [
+        "spiritual",
+        "hybrid"
+      ],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "soul_absorption_add": 0.25,
+        "move_speed_pct": 0.1,
+        "attack_speed_pct": 0.1
+      },
+      "description": "Cosecha espiritual suprema (+25% Alma, +10% Vel. Mov y Ataque)."
+    },
+    {
+      "id": "def_act_bark",
+      "name": "Égida de Corteza Viva",
+      "tree_id": "defense_survival",
+      "tree_name": "Defensa y Supervivencia",
+      "type": "active",
+      "tier": 1,
+      "order_in_tree": 1,
+      "min_stage": 1,
+      "cost_points": 1,
+      "prereq_skills": [],
+      "allowed_lineages": [],
+      "cooldown": 7.0,
+      "energy_cost": 18,
+      "combat_archetype": "aegis_barrier",
+      "effect_data": {
+        "heal_pct": 0.1,
+        "damage_mult": 1.1,
+        "radius": 3.6
+      },
+      "description": "Endurece la guarda repeliendo enemigos cercanos y restaurando 10% PV."
+    },
+    {
+      "id": "def_pas_roots",
+      "name": "Raíces de Roble Férreo",
+      "tree_id": "defense_survival",
+      "tree_name": "Defensa y Supervivencia",
+      "type": "passive",
+      "tier": 1,
+      "order_in_tree": 2,
+      "min_stage": 1,
+      "cost_points": 1,
+      "prereq_skills": [],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "max_hp_pct": 0.1,
+        "defense_add": 4.0
+      },
+      "description": "Refuerza la estructura interna (+10% Vida Máxima, +4 Defensa)."
+    },
+    {
+      "id": "def_act_parry",
+      "name": "Contragolpe del Santuario",
+      "tree_id": "defense_survival",
+      "tree_name": "Defensa y Supervivencia",
+      "type": "active",
+      "tier": 2,
+      "order_in_tree": 3,
+      "min_stage": 3,
+      "cost_points": 1,
+      "prereq_skills": [
+        "def_act_bark"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 6.5,
+      "energy_cost": 22,
+      "combat_archetype": "shockwave",
+      "effect_data": {
+        "damage_mult": 1.7,
+        "radius": 3.8
+      },
+      "description": "Desvía la presión hostil devolviendo un tajo circular contundente."
+    },
+    {
+      "id": "def_pas_sap",
+      "name": "Savia Regeneradora",
+      "tree_id": "defense_survival",
+      "tree_name": "Defensa y Supervivencia",
+      "type": "passive",
+      "tier": 2,
+      "order_in_tree": 4,
+      "min_stage": 4,
+      "cost_points": 1,
+      "prereq_skills": [
+        "def_pas_roots"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "max_hp_pct": 0.08,
+        "elemental_resistance_add": 0.06
+      },
+      "description": "Sella grietas en la hoja (+8% Vida Máx, +6% Resistencia Elemental)."
+    },
+    {
+      "id": "def_act_bastion",
+      "name": "Baluarte de Bronce Antiguo",
+      "tree_id": "defense_survival",
+      "tree_name": "Defensa y Supervivencia",
+      "type": "active",
+      "tier": 3,
+      "order_in_tree": 5,
+      "min_stage": 6,
+      "cost_points": 2,
+      "prereq_skills": [
+        "def_act_parry"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 8.5,
+      "energy_cost": 28,
+      "combat_archetype": "aegis_barrier",
+      "effect_data": {
+        "heal_pct": 0.14,
+        "damage_mult": 1.65,
+        "radius": 4.4
+      },
+      "description": "Invoca anillos protectores que restauran 14% PV e impactan el área."
+    },
+    {
+      "id": "def_pas_ward",
+      "name": "Templado Inquebrantable",
+      "tree_id": "defense_survival",
+      "tree_name": "Defensa y Supervivencia",
+      "type": "passive",
+      "tier": 3,
+      "order_in_tree": 6,
+      "min_stage": 7,
+      "cost_points": 2,
+      "prereq_skills": [
+        "def_pas_sap"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "defense_add": 9.0,
+        "elemental_resistance_add": 0.07
+      },
+      "description": "Incrementa +9 Defensa y +7% Resistencia Elemental."
+    },
+    {
+      "id": "def_act_halo",
+      "name": "Custodia Radiante",
+      "tree_id": "defense_survival",
+      "tree_name": "Defensa y Supervivencia",
+      "type": "active",
+      "tier": 4,
+      "order_in_tree": 7,
+      "min_stage": 10,
+      "cost_points": 2,
+      "prereq_skills": [
+        "def_act_bastion"
+      ],
+      "allowed_lineages": [
+        "blessed",
+        "spiritual",
+        "hybrid"
+      ],
+      "cooldown": 9.5,
+      "energy_cost": 34,
+      "combat_archetype": "aegis_barrier",
+      "effect_data": {
+        "heal_pct": 0.18,
+        "damage_mult": 2.2,
+        "radius": 5.2
+      },
+      "description": "Consagra el terreno con luz protectora que sana 18% PV y abrasa demonios."
+    },
+    {
+      "id": "def_pas_aegis",
+      "name": "Coraza de Reliquia",
+      "tree_id": "defense_survival",
+      "tree_name": "Defensa y Supervivencia",
+      "type": "passive",
+      "tier": 4,
+      "order_in_tree": 8,
+      "min_stage": 11,
+      "cost_points": 2,
+      "prereq_skills": [
+        "def_pas_ward"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "max_hp_pct": 0.14,
+        "defense_add": 12.0
+      },
+      "description": "Densidad mineral legendaria (+14% Vida Máx, +12 Defensa)."
+    },
+    {
+      "id": "def_act_fortress",
+      "name": "Ciudadela del Sol Invicto",
+      "tree_id": "defense_survival",
+      "tree_name": "Defensa y Supervivencia",
+      "type": "active",
+      "tier": 5,
+      "order_in_tree": 9,
+      "min_stage": 15,
+      "cost_points": 3,
+      "prereq_skills": [
+        "def_act_halo"
+      ],
+      "allowed_lineages": [
+        "blessed",
+        "hybrid"
+      ],
+      "cooldown": 12.0,
+      "energy_cost": 44,
+      "combat_archetype": "aegis_barrier",
+      "effect_data": {
+        "heal_pct": 0.22,
+        "damage_mult": 2.85,
+        "radius": 6.0
+      },
+      "description": "Despliega una cúpula solar que restaura 22% PV y castiga agresores."
+    },
+    {
+      "id": "def_pas_immortal",
+      "name": "Núcleo Indestructible",
+      "tree_id": "defense_survival",
+      "tree_name": "Defensa y Supervivencia",
+      "type": "passive",
+      "tier": 5,
+      "order_in_tree": 10,
+      "min_stage": 16,
+      "cost_points": 3,
+      "prereq_skills": [
+        "def_pas_aegis"
+      ],
+      "allowed_lineages": [
+        "blessed",
+        "spiritual",
+        "hybrid"
+      ],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "max_hp_pct": 0.16,
+        "elemental_resistance_add": 0.1
+      },
+      "description": "El núcleo resiste golpes letales (+16% Vida Máx, +10% Res. Elemental)."
+    },
+    {
+      "id": "def_act_sanctum",
+      "name": "Égida Eterna de Creación",
+      "tree_id": "defense_survival",
+      "tree_name": "Defensa y Supervivencia",
+      "type": "active",
+      "tier": 6,
+      "order_in_tree": 11,
+      "min_stage": 20,
+      "cost_points": 4,
+      "prereq_skills": [
+        "def_act_fortress"
+      ],
+      "allowed_lineages": [
+        "blessed",
+        "hybrid"
+      ],
+      "cooldown": 14.5,
+      "energy_cost": 52,
+      "combat_archetype": "aegis_barrier",
+      "effect_data": {
+        "heal_pct": 0.28,
+        "damage_mult": 3.5,
+        "radius": 6.6
+      },
+      "description": "Santuario absoluto de preservación divina y juicio defensivo."
+    },
+    {
+      "id": "def_pas_titan",
+      "name": "Existencia Inamovible",
+      "tree_id": "defense_survival",
+      "tree_name": "Defensa y Supervivencia",
+      "type": "passive",
+      "tier": 6,
+      "order_in_tree": 12,
+      "min_stage": 21,
+      "cost_points": 4,
+      "prereq_skills": [
+        "def_pas_immortal"
+      ],
+      "allowed_lineages": [
+        "blessed",
+        "hybrid"
+      ],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "max_hp_pct": 0.22,
+        "defense_add": 22.0
+      },
+      "description": "Fortaleza suprema (+22% Vida Máx, +22 Defensa)."
+    },
+    {
+      "id": "cur_act_bite",
+      "name": "Mordisco Carmesí",
+      "tree_id": "curses_absorption",
+      "tree_name": "Maldiciones y Absorción",
+      "type": "active",
+      "tier": 1,
+      "order_in_tree": 1,
+      "min_stage": 1,
+      "cost_points": 1,
+      "prereq_skills": [],
+      "allowed_lineages": [],
+      "cooldown": 5.5,
+      "energy_cost": 18,
+      "combat_archetype": "crimson_cleave",
+      "effect_data": {
+        "damage_mult": 1.5,
+        "lifesteal_bonus": 0.12
+      },
+      "description": "Tajo voraz que drena vitalidad directa de las presas alcanzadas."
+    },
+    {
+      "id": "cur_pas_thirst",
+      "name": "Sed de Esencia Oscura",
+      "tree_id": "curses_absorption",
+      "tree_name": "Maldiciones y Absorción",
+      "type": "passive",
+      "tier": 1,
+      "order_in_tree": 2,
+      "min_stage": 1,
+      "cost_points": 1,
+      "prereq_skills": [],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "life_steal_add": 0.03,
+        "physical_damage_pct": 0.05
+      },
+      "description": "Otorga +3% Robo de Vida y +5% Daño Físico."
+    },
+    {
+      "id": "cur_act_bleed",
+      "name": "Espina Desangradora",
+      "tree_id": "curses_absorption",
+      "tree_name": "Maldiciones y Absorción",
+      "type": "active",
+      "tier": 2,
+      "order_in_tree": 3,
+      "min_stage": 3,
+      "cost_points": 1,
+      "prereq_skills": [
+        "cur_act_bite"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 6.5,
+      "energy_cost": 24,
+      "combat_archetype": "wave_projectile",
+      "effect_data": {
+        "damage_mult": 1.85,
+        "speed": 23.0
+      },
+      "description": "Dispara una astilla maldita que abre hemorragias profundas."
+    },
+    {
+      "id": "cur_pas_venom",
+      "name": "Miasma Corrosivo",
+      "tree_id": "curses_absorption",
+      "tree_name": "Maldiciones y Absorción",
+      "type": "passive",
+      "tier": 2,
+      "order_in_tree": 4,
+      "min_stage": 4,
+      "cost_points": 1,
+      "prereq_skills": [
+        "cur_pas_thirst"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "status_chance_add": 0.09,
+        "armor_penetration_add": 0.05
+      },
+      "description": "Corroe armaduras (+9% Prob. Estado, +5% Penetración)."
+    },
+    {
+      "id": "cur_act_reap",
+      "name": "Guadaña Devoraalmas",
+      "tree_id": "curses_absorption",
+      "tree_name": "Maldiciones y Absorción",
+      "type": "active",
+      "tier": 3,
+      "order_in_tree": 5,
+      "min_stage": 6,
+      "cost_points": 2,
+      "prereq_skills": [
+        "cur_act_bleed"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 8.0,
+      "energy_cost": 30,
+      "combat_archetype": "crimson_cleave",
+      "effect_data": {
+        "damage_mult": 2.3,
+        "lifesteal_bonus": 0.16
+      },
+      "description": "Barrido semicircular que absorbe vigor de cada enemigo herido."
+    },
+    {
+      "id": "cur_pas_pact",
+      "name": "Pacto de Sangre y Filo",
+      "tree_id": "curses_absorption",
+      "tree_name": "Maldiciones y Absorción",
+      "type": "passive",
+      "tier": 3,
+      "order_in_tree": 6,
+      "min_stage": 7,
+      "cost_points": 2,
+      "prereq_skills": [
+        "cur_pas_venom"
+      ],
+      "allowed_lineages": [
+        "cursed",
+        "arcane",
+        "hybrid"
+      ],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "physical_damage_pct": 0.14,
+        "crit_damage_add": 0.2,
+        "max_hp_pct": -0.05
+      },
+      "description": "Sacrifica 5% PV máx a cambio de +14% Daño Físico y +20% Daño Crítico."
+    },
+    {
+      "id": "cur_act_abyss",
+      "name": "Ruptura del Vacío",
+      "tree_id": "curses_absorption",
+      "tree_name": "Maldiciones y Absorción",
+      "type": "active",
+      "tier": 4,
+      "order_in_tree": 7,
+      "min_stage": 10,
+      "cost_points": 2,
+      "prereq_skills": [
+        "cur_act_reap"
+      ],
+      "allowed_lineages": [
+        "cursed",
+        "arcane",
+        "hybrid"
+      ],
+      "cooldown": 9.5,
+      "energy_cost": 36,
+      "combat_archetype": "nova_burst",
+      "effect_data": {
+        "damage_mult": 2.85,
+        "radius": 5.2
+      },
+      "description": "Implosiona sombras abisales que desgarran la realidad cercana."
+    },
+    {
+      "id": "cur_pas_hunger",
+      "name": "Hambre Insaciable",
+      "tree_id": "curses_absorption",
+      "tree_name": "Maldiciones y Absorción",
+      "type": "passive",
+      "tier": 4,
+      "order_in_tree": 8,
+      "min_stage": 11,
+      "cost_points": 2,
+      "prereq_skills": [
+        "cur_pas_pact"
+      ],
+      "allowed_lineages": [
+        "cursed",
+        "hybrid"
+      ],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "life_steal_add": 0.05,
+        "soul_absorption_add": 0.15
+      },
+      "description": "Drena +5% Robo de Vida adicional y +15% Esencia de Alma."
+    },
+    {
+      "id": "cur_act_eclipse",
+      "name": "Festín del Eclipse Negro",
+      "tree_id": "curses_absorption",
+      "tree_name": "Maldiciones y Absorción",
+      "type": "active",
+      "tier": 5,
+      "order_in_tree": 9,
+      "min_stage": 15,
+      "cost_points": 3,
+      "prereq_skills": [
+        "cur_act_abyss"
+      ],
+      "allowed_lineages": [
+        "cursed",
+        "hybrid"
+      ],
+      "cooldown": 11.5,
+      "energy_cost": 46,
+      "combat_archetype": "crimson_cleave",
+      "effect_data": {
+        "damage_mult": 3.55,
+        "lifesteal_bonus": 0.22
+      },
+      "description": "Desgarro carmesí masivo que convierte la agonía enemiga en poder."
+    },
+    {
+      "id": "cur_pas_doom",
+      "name": "Marca de Extinción",
+      "tree_id": "curses_absorption",
+      "tree_name": "Maldiciones y Absorción",
+      "type": "passive",
+      "tier": 5,
+      "order_in_tree": 10,
+      "min_stage": 16,
+      "cost_points": 3,
+      "prereq_skills": [
+        "cur_pas_hunger"
+      ],
+      "allowed_lineages": [
+        "cursed",
+        "hybrid"
+      ],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "crit_chance_add": 0.07,
+        "armor_penetration_add": 0.12
+      },
+      "description": "Otorga +7% Crítico y +12% Penetración de Armadura."
+    },
+    {
+      "id": "cur_act_devour",
+      "name": "Apocalipsis Devorador",
+      "tree_id": "curses_absorption",
+      "tree_name": "Maldiciones y Absorción",
+      "type": "active",
+      "tier": 6,
+      "order_in_tree": 11,
+      "min_stage": 20,
+      "cost_points": 4,
+      "prereq_skills": [
+        "cur_act_eclipse"
+      ],
+      "allowed_lineages": [
+        "cursed",
+        "hybrid"
+      ],
+      "cooldown": 14.0,
+      "energy_cost": 58,
+      "combat_archetype": "sword_rain",
+      "effect_data": {
+        "damage_mult": 4.25,
+        "strikes": 7
+      },
+      "description": "Desata lanzas de oscuridad hambrienta sobre todo el campo."
+    },
+    {
+      "id": "cur_pas_abyss_lord",
+      "name": "Señor de la Hoja Abisal",
+      "tree_id": "curses_absorption",
+      "tree_name": "Maldiciones y Absorción",
+      "type": "passive",
+      "tier": 6,
+      "order_in_tree": 12,
+      "min_stage": 21,
+      "cost_points": 4,
+      "prereq_skills": [
+        "cur_pas_doom"
+      ],
+      "allowed_lineages": [
+        "cursed",
+        "hybrid"
+      ],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "physical_damage_pct": 0.2,
+        "life_steal_add": 0.06,
+        "crit_damage_add": 0.3
+      },
+      "description": "Cúspide maldita (+20% Daño Físico, +6% Robo de Vida, +30% Daño Crítico)."
+    },
+    {
+      "id": "ultimate",
+      "name": "Lluvia de Espadas Celestiales",
+      "tree_id": "legendary_powers",
+      "tree_name": "Poderes Legendarios",
+      "type": "active",
+      "tier": 1,
+      "order_in_tree": 1,
+      "min_stage": 1,
+      "cost_points": 1,
+      "prereq_skills": [],
+      "allowed_lineages": [],
+      "cooldown": 12.0,
+      "energy_cost": 35,
+      "combat_archetype": "sword_rain",
+      "effect_data": {
+        "damage_mult": 2.4,
+        "strikes": 6
+      },
+      "description": "Invoca espadas de luz astral que caen en círculo aniquilando hordas."
+    },
+    {
+      "id": "leg_pas_spark",
+      "name": "Chispa de Mito",
+      "tree_id": "legendary_powers",
+      "tree_name": "Poderes Legendarios",
+      "type": "passive",
+      "tier": 1,
+      "order_in_tree": 2,
+      "min_stage": 2,
+      "cost_points": 1,
+      "prereq_skills": [],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "physical_damage_pct": 0.05,
+        "elemental_damage_pct": 0.05
+      },
+      "description": "Despierta el linaje mítico (+5% Daño Físico y +5% Daño Elemental)."
+    },
+    {
+      "id": "leg_act_astro",
+      "name": "Rayo de Astrolabio",
+      "tree_id": "legendary_powers",
+      "tree_name": "Poderes Legendarios",
+      "type": "active",
+      "tier": 2,
+      "order_in_tree": 3,
+      "min_stage": 5,
+      "cost_points": 2,
+      "prereq_skills": [
+        "ultimate"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 10.0,
+      "energy_cost": 32,
+      "combat_archetype": "wave_projectile",
+      "effect_data": {
+        "damage_mult": 2.35,
+        "speed": 28.0
+      },
+      "description": "Dispara un haz de geometría arcana pura de largo alcance."
+    },
+    {
+      "id": "leg_pas_rune",
+      "name": "Inscripción de Soberanía",
+      "tree_id": "legendary_powers",
+      "tree_name": "Poderes Legendarios",
+      "type": "passive",
+      "tier": 2,
+      "order_in_tree": 4,
+      "min_stage": 5,
+      "cost_points": 2,
+      "prereq_skills": [
+        "leg_pas_spark"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "cdr_add": 0.05,
+        "max_energy_add": 25
+      },
+      "description": "Reduce enfriamientos 5% y otorga +25 Energía Máxima."
+    },
+    {
+      "id": "leg_act_judgment",
+      "name": "Fulgor del Trono Solar",
+      "tree_id": "legendary_powers",
+      "tree_name": "Poderes Legendarios",
+      "type": "active",
+      "tier": 3,
+      "order_in_tree": 5,
+      "min_stage": 9,
+      "cost_points": 2,
+      "prereq_skills": [
+        "leg_act_astro"
+      ],
+      "allowed_lineages": [
+        "blessed",
+        "arcane",
+        "hybrid"
+      ],
+      "cooldown": 11.5,
+      "energy_cost": 40,
+      "combat_archetype": "nova_burst",
+      "effect_data": {
+        "damage_mult": 2.95,
+        "radius": 5.8
+      },
+      "description": "Corona radiante que juzga a todas las criaturas alrededor."
+    },
+    {
+      "id": "leg_pas_crown",
+      "name": "Autoridad de Reliquia Viva",
+      "tree_id": "legendary_powers",
+      "tree_name": "Poderes Legendarios",
+      "type": "passive",
+      "tier": 3,
+      "order_in_tree": 6,
+      "min_stage": 9,
+      "cost_points": 2,
+      "prereq_skills": [
+        "leg_pas_rune"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "crit_chance_add": 0.05,
+        "soul_absorption_add": 0.12
+      },
+      "description": "Presencia imperial (+5% Crítico, +12% Absorción de Alma)."
+    },
+    {
+      "id": "leg_act_rift",
+      "name": "Corte Dimensional",
+      "tree_id": "legendary_powers",
+      "tree_name": "Poderes Legendarios",
+      "type": "active",
+      "tier": 4,
+      "order_in_tree": 7,
+      "min_stage": 13,
+      "cost_points": 3,
+      "prereq_skills": [
+        "leg_act_judgment"
+      ],
+      "allowed_lineages": [
+        "arcane",
+        "cursed",
+        "spiritual",
+        "hybrid"
+      ],
+      "cooldown": 12.0,
+      "energy_cost": 46,
+      "combat_archetype": "wave_projectile",
+      "effect_data": {
+        "damage_mult": 3.45,
+        "speed": 30.0
+      },
+      "description": "Rasga el tejido mismo del espacio proyectando una fisura letal."
+    },
+    {
+      "id": "leg_pas_cosmos",
+      "name": "Núcleo de Constelación",
+      "tree_id": "legendary_powers",
+      "tree_name": "Poderes Legendarios",
+      "type": "passive",
+      "tier": 4,
+      "order_in_tree": 8,
+      "min_stage": 14,
+      "cost_points": 3,
+      "prereq_skills": [
+        "leg_pas_crown"
+      ],
+      "allowed_lineages": [
+        "arcane",
+        "spiritual",
+        "hybrid"
+      ],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "elemental_damage_pct": 0.15,
+        "cdr_add": 0.06
+      },
+      "description": "Alinea las runas con el firmamento (+15% Daño Elemental, +6% CDR)."
+    },
+    {
+      "id": "leg_act_domain",
+      "name": "Dominio de las Mil Espadas",
+      "tree_id": "legendary_powers",
+      "tree_name": "Poderes Legendarios",
+      "type": "active",
+      "tier": 5,
+      "order_in_tree": 9,
+      "min_stage": 17,
+      "cost_points": 3,
+      "prereq_skills": [
+        "leg_act_rift"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 14.0,
+      "energy_cost": 54,
+      "combat_archetype": "sword_rain",
+      "effect_data": {
+        "damage_mult": 3.9,
+        "strikes": 8
+      },
+      "description": "Despliega un campo soberano donde llueven hojas de todas las eras."
+    },
+    {
+      "id": "leg_pas_duality",
+      "name": "Convergencia Luz-Abismo",
+      "tree_id": "legendary_powers",
+      "tree_name": "Poderes Legendarios",
+      "type": "passive",
+      "tier": 5,
+      "order_in_tree": 10,
+      "min_stage": 18,
+      "cost_points": 3,
+      "prereq_skills": [
+        "leg_pas_cosmos"
+      ],
+      "allowed_lineages": [
+        "blessed",
+        "cursed",
+        "hybrid"
+      ],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "physical_damage_pct": 0.12,
+        "elemental_damage_pct": 0.12,
+        "crit_damage_add": 0.2
+      },
+      "description": "Armoniza energías opuestas (+12% Físico, +12% Elemental, +20% Crít)."
+    },
+    {
+      "id": "leg_act_apotheosis",
+      "name": "Apoteosis: Espada del Génesis",
+      "tree_id": "legendary_powers",
+      "tree_name": "Poderes Legendarios",
+      "type": "active",
+      "tier": 6,
+      "order_in_tree": 11,
+      "min_stage": 22,
+      "cost_points": 4,
+      "prereq_skills": [
+        "leg_act_domain"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 16.0,
+      "energy_cost": 65,
+      "combat_archetype": "sword_rain",
+      "effect_data": {
+        "damage_mult": 4.8,
+        "strikes": 10
+      },
+      "description": "Técnica definitiva de Era VI: juicio ontológico de la Espada Suprema."
+    },
+    {
+      "id": "leg_pas_supreme",
+      "name": "Existencia Suprema",
+      "tree_id": "legendary_powers",
+      "tree_name": "Poderes Legendarios",
+      "type": "passive",
+      "tier": 6,
+      "order_in_tree": 12,
+      "min_stage": 23,
+      "cost_points": 4,
+      "prereq_skills": [
+        "leg_pas_duality"
+      ],
+      "allowed_lineages": [],
+      "cooldown": 0.0,
+      "energy_cost": 0,
+      "combat_archetype": "passive",
+      "effect_data": {
+        "physical_damage_pct": 0.18,
+        "elemental_damage_pct": 0.18,
+        "max_hp_pct": 0.15,
+        "cdr_add": 0.06
+      },
+      "description": "Culminación de las 24 evoluciones (+18% Daño Total, +15% PV, +6% CDR)."
+    }
+  ]
+}
