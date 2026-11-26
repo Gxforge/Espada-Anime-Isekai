@@ -14,7 +14,8 @@ const SWORD_EVOLUTIONS := [
 		"blade_color": Color("#9c6635"), "edge_color": Color("#c48f5a"),
 		"guard_color": Color("#5c3a1e"), "aura_color": Color("#86efac"),
 		"slash_color": Color("#d4a373"), "special_effect": "none",
-		"model_path": "res://assets/models/sword_wood_nv1.obj"
+		"model_path": "res://assets/models/swords/wood_ancestral/sword_01_wood_ancestral.glb",
+		"legacy_obj_path": "res://assets/models/sword_wood_nv1.obj"
 	},
 	{
 		"id": "copper", "tier_index": 1, "min_level": 5, "next_evolution_level": 10,

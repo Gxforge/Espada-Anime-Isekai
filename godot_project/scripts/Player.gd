@@ -301,24 +301,26 @@ func perform_skill(skill: String) -> void:
 	if cooldowns.get(skill, 0.0) > 0.0:
 		return
 	var eff_cd := get_effective_cd_max(skill)
+	var aura_col: Color = current_tier.get("aura_color", Color("#86efac"))
+	var slash_col: Color = current_tier.get("slash_color", Color("#d4a373"))
 	match skill:
 		"whirlwind":
 			cooldowns["whirlwind"] = eff_cd
 			whirlwind_timer = 1.1
 			whirlwind_tick = 0.0
-			_spawn_shockwave(global_position, current_tier["aura_color"], float(stats["range"]) * 1.4)
+			_spawn_shockwave(global_position, aura_col, float(stats["range"]) * 1.4)
 			play_sfx("skill_q")
 			log_added.emit("¡Torbellino desatado!", "skill")
 		"swordWave":
 			cooldowns["swordWave"] = eff_cd
 			_spawn_wave_projectile()
-			_spawn_shockwave(global_position + Vector3(sin(rotation.y), 0, cos(rotation.y)) * 1.5, current_tier["slash_color"], 3.0)
+			_spawn_shockwave(global_position + Vector3(sin(rotation.y), 0, cos(rotation.y)) * 1.5, slash_col, 3.0)
 			play_sfx("skill_e")
 			log_added.emit("¡Onda Cortante lanzada!", "skill")
 		"ultimate":
 			cooldowns["ultimate"] = eff_cd
 			_spawn_ultimate_swords()
-			_spawn_shockwave(global_position, current_tier["aura_color"], 6.0)
+			_spawn_shockwave(global_position, aura_col, 6.0)
 			play_sfx("skill_r")
 			log_added.emit("¡Lluvia de Espadas Celestiales!", "skill")
 		"dash":
@@ -794,7 +796,7 @@ func _refresh_sword_visual() -> void:
 	if ResourceLoader.exists("res://scripts/ModelLoader.gd"):
 		var ML = load("res://scripts/ModelLoader.gd")
 		built = ML.build_sword_visual(current_tier, sword_level)
-		used_obj = built != null and built.name == "SwordOBJ"
+		used_obj = built != null and (built.name == "SwordOBJ" or built.name == "SwordGLB")
 	if built == null:
 		var SwordBuilderScript = load("res://scripts/SwordBuilder.gd")
 		built = SwordBuilderScript.build_sword(str(current_tier["id"]), sword_level)

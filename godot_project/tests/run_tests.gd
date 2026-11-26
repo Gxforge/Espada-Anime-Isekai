@@ -41,6 +41,7 @@ func _process(_delta: float) -> bool:
 	test_save_settings_and_audio_manager()
 	test_arena_decor_quality_levels()
 	test_hud_layout_and_overlays_all_resolutions()
+	test_pilot_sword_3d_glb_and_pbr()
 
 	print("=== RESULTS: %d passed, %d failed ===" % [passes, failures.size()])
 	for f in failures:
@@ -556,3 +557,51 @@ func test_hud_layout_and_overlays_all_resolutions() -> void:
 
 	hud.free()
 	world.free()
+
+func _collect_meshes_recursive(n: Node, out: Array) -> void:
+	if n is MeshInstance3D and (n as MeshInstance3D).mesh != null:
+		out.append(n)
+	for c in n.get_children():
+		_collect_meshes_recursive(c, out)
+
+func test_pilot_sword_3d_glb_and_pbr() -> void:
+	var base_dir := "res://assets/models/swords/wood_ancestral"
+	var pbr_maps := [
+		"%s/wood_ancestral_basecolor.png" % base_dir,
+		"%s/wood_ancestral_roughness.png" % base_dir,
+		"%s/wood_ancestral_metallic.png" % base_dir,
+		"%s/wood_ancestral_normal.png" % base_dir,
+		"%s/wood_ancestral_emission.png" % base_dir,
+	]
+	for mp in pbr_maps:
+		assert_true(ResourceLoader.exists(mp), "Pilot PBR map exists: %s" % mp)
+		var tex = load(mp)
+		assert_true(tex is Texture2D, "Pilot PBR map loads as Texture2D: %s" % mp)
+		if tex is Texture2D:
+			assert_eq((tex as Texture2D).get_width(), 1024, "Pilot PBR map width 1024: %s" % mp)
+			assert_eq((tex as Texture2D).get_height(), 1024, "Pilot PBR map height 1024: %s" % mp)
+
+	var glb_path := "%s/sword_01_wood_ancestral.glb" % base_dir
+	assert_true(ResourceLoader.exists(glb_path), "Pilot GLB exists")
+	var packed = load(glb_path)
+	assert_true(packed is PackedScene, "Pilot GLB imports as PackedScene")
+
+	var gd = root.get_node_or_null("GameData")
+	var ml = load("res://scripts/ModelLoader.gd")
+	var built: Node3D = ml.build_sword_visual(gd.SWORD_EVOLUTIONS[0], 1)
+	assert_true(built != null and built.name == "SwordGLB", "Stage 01 builds SwordGLB via ModelLoader")
+	var meshes: Array = []
+	_collect_meshes_recursive(built, meshes)
+	assert_eq(meshes.size(), 7, "Pilot GLB preserves 7 individual modeled sub-parts")
+	for mi in meshes:
+		var m: Mesh = (mi as MeshInstance3D).mesh
+		assert_true((mi as MeshInstance3D).material_override == null, "Pilot GLB sub-part preserves authored PBR material without flat override: %s" % mi.name)
+		var arrays := m.surface_get_arrays(0)
+		var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+		var norms: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+		assert_true(uvs.size() > 0, "Sub-part has UVs: %s" % mi.name)
+		assert_true(norms.size() > 0, "Sub-part has normals: %s" % mi.name)
+		var surf_mat: Material = m.surface_get_material(0)
+		assert_true(surf_mat is BaseMaterial3D, "Sub-part has authored BaseMaterial3D: %s" % mi.name)
+	built.free()
+
