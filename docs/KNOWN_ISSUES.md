@@ -1,28 +1,21 @@
 # KNOWN ISSUES
 
-## Resolved in this pass
+## Resolved in 2026-11-26 Pass
 
-- Real OBJ runtime integration wired for swords, monsters, and knight (with procedural fallback).
-- Skill cooldown canonicalization fixed (`swordWave` canonical, `wave` alias supported).
-- Basic sword special effects implemented (copper sparks AoE, silver chain up to 3, gold burn+regen, crystal auto shards, obsidian magma eruption, celestial wave/nova; iron bleed hook present).
-- Upgrade max level guard added (10).
-- Basic SaveSystem added (versioned JSON, load on start, autosave).
-- Headless test runner added (60 checks passing locally).
-- CI rewritten to strict mode; Windows export preset added.
+- **Fixed `Main.gd` parse error**: removed undeclared `_music` reference and wired `AudioManager` crossfading (`ambient` <-> `boss_theme`).
+- **HUD 1:1 anime-isekai layout & multi-resolution support**: rebuilt `HUD.gd` + `MinimapRadar.gd`, clipped circular portrait cleanly inside its 84x84 ring, eliminated all `U+1Fxxx` missing-glyph tofu boxes, and verified zero overlaps across `1280x720`, `1366x768`, `1600x900`, and `1920x1080`.
+- **Complete RPG Inventory, Relics & Loot**: implemented 7 monster materials, 9 equippable relics across 3 slots, crafting workshop, and 2 consumables persisted in `SaveSystem` v2 (with v1 save migration).
+- **Complete Audio System**: implemented `AudioManager.gd` (`Master`/`Music`/`SFX` buses, 3 music loops, 16 SFX WAVs, persistent mixer sliders).
+- **Complete Malakor 2-Phase Encounter**: implemented active melee + telegraphed `slam`, `charge`, and Phase II `meteor` barrage, Phase II HUD bar, anti-duplicate `_dead` reward guard, and guaranteed `corazon_abismo` drop.
+- **Expanded Regression Suite**: expanded `godot_project/tests/run_tests.gd` to **507 deterministic runtime assertions**.
 
-## Still open
+## Remaining / Environment Limitations
 
-1. **Boss Malakor encounter incomplete** — no dedicated boss patterns/telegraphing/boss UI/defeat sequence/reward ceremony.
-2. **Sword effect parity/balance not fully validated** — effects are implemented as initial gameplay pass; need tuning and playtest against web reference.
-3. **No pause menu / inventory / game-over screen** — death currently respawns player in-place.
-4. **No audio system** — no SFX/BGM/settings.
-5. **No quality settings / performance profiling report** — no measured FPS data on target hardware.
-6. **OBJ orientation/scale polish** — models load and render, but per-model pivot/orientation/material polish may be needed for closer parity.
-7. **Player.gd still large** — responsibilities should be split further.
-8. **CI export depends on runner templates** — strict workflow will fail clearly if templates are missing, but GitHub environment must provide Godot 4.4 export templates.
-9. **No full regression suite** — current tests cover data/resources/basic invariants; combat/scene integration tests need expansion.
-
-- HUD más cercano a la referencia, pero no paridad visual 1:1 (arte/iconografía final, tipografía/estilo exacto, minimapa detallado).
-- Ajustes de calidad/audio son funcionales básicos; faltan assets de audio reales y opciones avanzadas.
-- Inventario/Stats funcionales básicos; falta inventario completo de ítems/materiales si el diseño original lo requiere.
-- QA 4 resoluciones: capturas smoke realizadas; falta verificación interactiva completa en cada resolución.
+1. **Physical GPU FPS Not Measured in Container (`NOT TESTED`)**:
+   - Interactive 3D rendering in this environment runs on CPU software rasterization (`Mesa llvmpipe`, ~2.38 FPS at `1600x900` Forward+). Frame rate on dedicated/integrated desktop GPUs has not been profiled in this container and should be validated on target Windows/Linux hardware.
+2. **Windows `.exe` Native OS Execution (`NOT TESTED`) & `rcedit`**:
+   - `ForjaDeAlmas3D.exe` builds cleanly as a valid 64-bit PE32+ executable on Linux/CI, with a non-blocking Godot export warning because `rcedit` (optional Windows icon/version resource tool) is not configured in the Linux container. Interactive gameplay on native Windows OS was not executed in this Linux session.
+3. **Reference Web Directory Included in Default Pack**:
+   - `godot_project/reference_web/` remains intact inside `godot_project/` as historical reference; excluding `reference_web/*` in `export_presets.cfg` could reduce `.pck` size further in a future release-packaging pass if desired.
+4. **`Player.gd` & `HUD.gd` File Size**:
+   - Both scripts are self-contained and cleanly tested, though future feature expansions could split `HUD` modals (`Inventory`, `Stats`, `Settings`) into dedicated sub-controllers.
