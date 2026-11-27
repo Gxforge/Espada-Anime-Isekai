@@ -15,7 +15,7 @@ IND = os.path.join(BASE, "individual")
 OUT = os.path.join(BASE, "sword_catalog_sheet.png")
 
 CELL_W, CELL_H = 560, 660
-COLS, ROWS = 14, 5
+COLS, ROWS = 16, 5
 PAD = 24
 TITLE_H = 118
 FOOT_H = 74
@@ -93,6 +93,11 @@ CARDS = [
     ("sword_12_nirvana_mirror.png", "Katana Espejo del Nirvana", "Etapa 12 - Era IV spiritual (anime zen)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_12_archmage_singularity.png", "Hoja Singularidad de Archimago", "Etapa 12 - Era IV arcane (anime singularidad)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_12_stormspirit_dragon.png", "Katana Secreta Dragon de Tormenta", "Etapa 12 - HIBRIDA SECRETA dragon-tormenta", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_13_empyrean_halo.png", "Hoja Trascendente del Halo Empireo", "Etapa 13 - Era IV blessed (anime halos)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_13_voidscar.png", "Espada Cicatriz del Vacio", "Etapa 13 - Era IV cursed (anime cicatriz)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_13_aurora_polar.png", "Espada de Aurora Polar", "Etapa 13 - Era IV elemental (anime aurora)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_13_worldtree.png", "Rama del Arbol Mundo", "Etapa 13 - Era IV spiritual (anime arbol)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_13_axiom.png", "Espada del Axioma", "Etapa 13 - Era IV arcane (anime axioma)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_copper_nv5.png", "Espada de Cobre Forjado (legacy)", "Fase legacy - Nv.5 (referencia antigua)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
     ("sword_iron_nv10.png", "Mandoble de Hierro Templado", "Fase legacy - Nv.10 (Equiv. Etapa 03)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
     ("sword_silver_nv15.png", "Hoja de Plata Runica", "Fase legacy - Nv.15 (Equiv. Etapa 05)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
@@ -119,7 +124,7 @@ def main():
     f_foot = font(13)
 
     draw_center(d, W / 2, 26, "FORJA DE ALMAS 3D - Catalogo 3D de Espadas", f_title, GOLD)
-    draw_center(d, W / 2, 74, "Studio Lexair - Renders neutros Cycles (key/fill/rim, sin glow ni particulas) - 64 modelos: 57 GLB bespoke verificados (Pilot + Etapas 02-12, incl. 2 hibridas secretas) + 7 siluetas OBJ legacy provisionales", f_sub, SUB)
+    draw_center(d, W / 2, 74, "Studio Lexair - Renders neutros Cycles (key/fill/rim, sin glow ni particulas) - 69 modelos: 62 GLB bespoke verificados (Pilot + Etapas 02-13, incl. 2 hibridas secretas) + 7 siluetas OBJ legacy provisionales", f_sub, SUB)
 
     for i, (fname, name, phase, status, border) in enumerate(CARDS):
         col, row = i % COLS, i // COLS
