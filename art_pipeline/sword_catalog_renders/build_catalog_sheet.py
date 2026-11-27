@@ -15,7 +15,7 @@ IND = os.path.join(BASE, "individual")
 OUT = os.path.join(BASE, "sword_catalog_sheet.png")
 
 CELL_W, CELL_H = 560, 660
-COLS, ROWS = 9, 5
+COLS, ROWS = 10, 5
 PAD = 24
 TITLE_H = 118
 FOOT_H = 74
@@ -72,6 +72,11 @@ CARDS = [
     ("sword_08_ancestral_chorus.png", "Espada Coro de los Ancestros", "Etapa 08 - Rama Spiritual (anime coro)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_08_grimoire_monolith.png", "Mandoble Monolito de Grimorio", "Etapa 08 - Rama Arcane (anime monolito)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_08_twilight_covenant.png", "Espada Hibrida del Pacto Crepuscular", "Etapa 08 - HIBRIDA SECRETA luz/sombra", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_09_dawnbreaker_templar.png", "Hoja Templaria Rompealbas", "Etapa 09 - Era III blessed (anime amanecer)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_09_abyssal_guillotine.png", "Filo Guillotina del Abismo", "Etapa 09 - Era III cursed (anime verdugo)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_09_twin_monsoon.png", "Sable Gemelo del Monzon", "Etapa 09 - Era III elemental (anime doble hoja)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_09_phantom_nodachi.png", "Nodachi Cortafantasmas", "Etapa 09 - Era III spiritual (anime nodachi)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_09_spellweaver_prism.png", "Filo Prisma Tejehechizos", "Etapa 09 - Era III arcane (anime prisma)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_copper_nv5.png", "Espada de Cobre Forjado (legacy)", "Fase legacy - Nv.5 (referencia antigua)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
     ("sword_iron_nv10.png", "Mandoble de Hierro Templado", "Fase legacy - Nv.10 (Equiv. Etapa 03)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
     ("sword_silver_nv15.png", "Hoja de Plata Runica", "Fase legacy - Nv.15 (Equiv. Etapa 05)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
@@ -98,7 +103,7 @@ def main():
     f_foot = font(13)
 
     draw_center(d, W / 2, 26, "FORJA DE ALMAS 3D - Catalogo 3D de Espadas", f_title, GOLD)
-    draw_center(d, W / 2, 74, "Studio Lexair - Renders neutros Cycles (key/fill/rim, sin glow ni particulas) - 43 modelos: 36 GLB bespoke verificados (Pilot + Etapas 02-08, incl. 1a hibrida secreta) + 7 siluetas OBJ legacy provisionales", f_sub, SUB)
+    draw_center(d, W / 2, 74, "Studio Lexair - Renders neutros Cycles (key/fill/rim, sin glow ni particulas) - 48 modelos: 41 GLB bespoke verificados (Pilot + Etapas 02-09, incl. 1a hibrida secreta) + 7 siluetas OBJ legacy provisionales", f_sub, SUB)
 
     for i, (fname, name, phase, status, border) in enumerate(CARDS):
         col, row = i % COLS, i // COLS
