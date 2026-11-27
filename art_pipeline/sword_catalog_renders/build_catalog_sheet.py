@@ -15,7 +15,7 @@ IND = os.path.join(BASE, "individual")
 OUT = os.path.join(BASE, "sword_catalog_sheet.png")
 
 CELL_W, CELL_H = 560, 660
-COLS, ROWS = 12, 5
+COLS, ROWS = 14, 5
 PAD = 24
 TITLE_H = 118
 FOOT_H = 74
@@ -87,6 +87,12 @@ CARDS = [
     ("sword_11_pyroclasm_heart.png", "Mandoble Corazon Piroclastico", "Etapa 11 - Era III elemental (anime magma)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_11_saint_reincarnated.png", "Filo del Santo Reencarnado", "Etapa 11 - Era III spiritual (anime santo)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_11_starlight_glyph.png", "Claymore Glifo de Luz Estelar", "Etapa 11 - Era III arcane (anime constelacion)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_12_archangel_verdict.png", "Claymore Veredicto de Arcangel", "Etapa 12 - Era IV blessed (anime catedral)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_12_hellfire_executioner.png", "Hoja Verdugo de Fuego Infernal", "Etapa 12 - Era IV cursed (anime fuego)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_12_maelstrom_triad.png", "Hoja Triada del Maelstrom", "Etapa 12 - Era IV elemental (anime triada)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_12_nirvana_mirror.png", "Katana Espejo del Nirvana", "Etapa 12 - Era IV spiritual (anime zen)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_12_archmage_singularity.png", "Hoja Singularidad de Archimago", "Etapa 12 - Era IV arcane (anime singularidad)", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
+    ("sword_12_stormspirit_dragon.png", "Katana Secreta Dragon de Tormenta", "Etapa 12 - HIBRIDA SECRETA dragon-tormenta", "BESPOKE GLB + PBR VERIFICADO", CARD_BORDER_OK),
     ("sword_copper_nv5.png", "Espada de Cobre Forjado (legacy)", "Fase legacy - Nv.5 (referencia antigua)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
     ("sword_iron_nv10.png", "Mandoble de Hierro Templado", "Fase legacy - Nv.10 (Equiv. Etapa 03)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
     ("sword_silver_nv15.png", "Hoja de Plata Runica", "Fase legacy - Nv.15 (Equiv. Etapa 05)", "SILUETA OBJ PROVISIONAL", CARD_BORDER_TMP),
@@ -113,7 +119,7 @@ def main():
     f_foot = font(13)
 
     draw_center(d, W / 2, 26, "FORJA DE ALMAS 3D - Catalogo 3D de Espadas", f_title, GOLD)
-    draw_center(d, W / 2, 74, "Studio Lexair - Renders neutros Cycles (key/fill/rim, sin glow ni particulas) - 58 modelos: 51 GLB bespoke verificados (Pilot + Etapas 02-11, incl. 1a hibrida secreta) + 7 siluetas OBJ legacy provisionales", f_sub, SUB)
+    draw_center(d, W / 2, 74, "Studio Lexair - Renders neutros Cycles (key/fill/rim, sin glow ni particulas) - 64 modelos: 57 GLB bespoke verificados (Pilot + Etapas 02-12, incl. 2 hibridas secretas) + 7 siluetas OBJ legacy provisionales", f_sub, SUB)
 
     for i, (fname, name, phase, status, border) in enumerate(CARDS):
         col, row = i % COLS, i // COLS
