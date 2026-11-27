@@ -617,8 +617,8 @@ func test_pilot_sword_3d_glb_and_pbr() -> void:
 		var tex = load(mp)
 		assert_true(tex is Texture2D, "Pilot PBR map loads as Texture2D: %s" % mp)
 		if tex is Texture2D:
-			assert_eq((tex as Texture2D).get_width(), 1024, "Pilot PBR map width 1024: %s" % mp)
-			assert_eq((tex as Texture2D).get_height(), 1024, "Pilot PBR map height 1024: %s" % mp)
+			assert_eq((tex as Texture2D).get_width(), 2048, "Pilot PBR map width 2048 (remaster): %s" % mp)
+			assert_eq((tex as Texture2D).get_height(), 2048, "Pilot PBR map height 2048 (remaster): %s" % mp)
 
 	var glb_path := "%s/sword_01_wood_ancestral.glb" % base_dir
 	assert_true(ResourceLoader.exists(glb_path), "Pilot GLB exists")
